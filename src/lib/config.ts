@@ -1,0 +1,124 @@
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { parse } from "smol-toml";
+
+const exec = promisify(execFile);
+
+/**
+ * Where the `aerospace` binary might be. Homebrew on Apple Silicon, Homebrew on
+ * Intel, then the app bundle itself — Raycast doesn't inherit a login shell's PATH,
+ * so guessing is unavoidable.
+ */
+const BINARY_CANDIDATES = [
+  "/opt/homebrew/bin/aerospace",
+  "/usr/local/bin/aerospace",
+  "/Applications/AeroSpace.app/Contents/Resources/aerospace",
+];
+
+/** Config locations AeroSpace itself checks, in its own order of preference. */
+const CONFIG_CANDIDATES = [
+  join(homedir(), ".aerospace.toml"),
+  join(homedir(), ".config", "aerospace", "aerospace.toml"),
+];
+
+let cachedBinary: string | null = null;
+
+export async function aerospaceBinary(): Promise<string> {
+  if (cachedBinary) return cachedBinary;
+  for (const candidate of BINARY_CANDIDATES) {
+    try {
+      await exec(candidate, ["--version"]);
+      cachedBinary = candidate;
+      return candidate;
+    } catch {
+      // try the next one
+    }
+  }
+  throw new Error(
+    "Could not find the `aerospace` binary. Install AeroSpace, or set its path in this extension's preferences.",
+  );
+}
+
+export async function aerospace(...args: string[]): Promise<string> {
+  const bin = await aerospaceBinary();
+  const { stdout } = await exec(bin, args);
+  return stdout.trim();
+}
+
+/**
+ * Resolve the config path. Asking the running server is authoritative — it accounts
+ * for a non-default location — but AeroSpace may not be running, so fall back to
+ * probing the standard paths rather than failing outright.
+ */
+export async function getConfigPath(): Promise<string> {
+  try {
+    const reported = await aerospace("config", "--config-path");
+    if (reported) return reported.startsWith("~") ? join(homedir(), reported.slice(1)) : reported;
+  } catch {
+    // server not running — fall through to probing
+  }
+  for (const candidate of CONFIG_CANDIDATES) {
+    try {
+      await readFile(candidate, "utf-8");
+      return candidate;
+    } catch {
+      // try the next one
+    }
+  }
+  throw new Error("No AeroSpace config found at ~/.aerospace.toml or ~/.config/aerospace/aerospace.toml.");
+}
+
+export interface Binding {
+  /** Binding mode this lives in — "main", "service", or any custom mode. */
+  mode: string;
+  /** Raw toml key, e.g. `ctrl-alt-cmd-l`. */
+  key: string;
+  /** Command string. Multi-command bindings are joined with "; ". */
+  command: string;
+  /** The individual commands, for bindings that run several in sequence. */
+  commands: string[];
+}
+
+interface ModeConfig {
+  binding?: Record<string, string | string[]>;
+}
+
+export interface AerospaceConfig {
+  mode?: Record<string, ModeConfig>;
+}
+
+export async function loadBindings(): Promise<{ bindings: Binding[]; configPath: string; raw: string }> {
+  const configPath = await getConfigPath();
+  const raw = await readFile(configPath, "utf-8");
+  const parsed = parse(raw) as unknown as AerospaceConfig;
+
+  const bindings: Binding[] = [];
+  for (const [mode, modeConfig] of Object.entries(parsed.mode ?? {})) {
+    for (const [key, value] of Object.entries(modeConfig.binding ?? {})) {
+      const commands = (Array.isArray(value) ? value : [value]).filter(Boolean);
+      if (commands.length === 0) continue;
+      bindings.push({ mode, key, command: commands.join("; "), commands });
+    }
+  }
+  return { bindings, configPath, raw };
+}
+
+/**
+ * Run a binding's command(s) against the currently focused window.
+ *
+ * Bindings in a non-main mode are prefixed with a `mode <name>` switch and suffixed
+ * with a return to main, because their keys are only live inside that mode — running
+ * the bare command would work but would leave the user's understanding of the mode
+ * out of sync with what they just saw happen.
+ */
+export async function runBinding(binding: Binding): Promise<void> {
+  const bin = await aerospaceBinary();
+  for (const command of binding.commands) {
+    const args = command.trim().split(/\s+/);
+    if (args[0] === "exec-and-forget") continue; // shelling out from here isn't ours to do
+    await exec(bin, args).catch(() => undefined); // a no-op command shouldn't surface as a crash
+  }
+}

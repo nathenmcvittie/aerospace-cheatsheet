@@ -1,0 +1,68 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "aerospace-cheatsheet",
+  "title": "AeroSpace Cheatsheet",
+  "description": "A readable cheatsheet for your AeroSpace window manager keybindings, with layout diagrams and goal-oriented recipes. Reads your own config, so it works on any keybindings.",
+  "icon": "icon.png",
+  "author": "nathenmcvittie",
+  "categories": ["Productivity", "System"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "cheatsheet",
+      "title": "AeroSpace Cheatsheet",
+      "subtitle": "AeroSpace",
+      "description": "Browse your keybindings grouped and explained, with layout diagrams and recipes",
+      "mode": "view"
+    },
+    {
+      "name": "goToWorkspace",
+      "title": "Go to Workspace",
+      "subtitle": "AeroSpace",
+      "description": "Jump to a workspace, with the apps on each one shown",
+      "mode": "view"
+    },
+    {
+      "name": "switchApps",
+      "title": "Switch Windows",
+      "subtitle": "AeroSpace",
+      "description": "Focus any window across all workspaces",
+      "mode": "view"
+    },
+    {
+      "name": "showConfig",
+      "title": "Show AeroSpace Config",
+      "subtitle": "AeroSpace",
+      "description": "Read the raw aerospace.toml with syntax highlighting",
+      "mode": "view"
+    },
+    {
+      "name": "menubar",
+      "title": "AeroSpace Menu Bar",
+      "subtitle": "AeroSpace",
+      "description": "Current workspace and layout actions in the menu bar",
+      "mode": "menu-bar",
+      "interval": "1m"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^2.1.3",
+    "@raycast/utils": "^2.3.0",
+    "smol-toml": "^1.8.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.0.4",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.10",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "diagrams": "node tools/gen-diagrams.mjs",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix"
+  }
+}
