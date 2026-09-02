@@ -48,6 +48,26 @@
       "interval": "1m"
     }
   ],
+  "preferences": [
+    {
+      "name": "aerospacePath",
+      "title": "AeroSpace Binary",
+      "description": "Path to the aerospace executable. Leave blank unless you installed AeroSpace somewhere other than Homebrew or /Applications.",
+      "type": "textfield",
+      "required": false,
+      "default": "",
+      "placeholder": "/opt/homebrew/bin/aerospace"
+    },
+    {
+      "name": "configPath",
+      "title": "Config File",
+      "description": "Path to your aerospace.toml. Leave blank to use the location AeroSpace reports, falling back to ~/.aerospace.toml.",
+      "type": "textfield",
+      "required": false,
+      "default": "",
+      "placeholder": "~/.aerospace.toml"
+    }
+  ],
   "dependencies": {
     "@raycast/api": "^2.1.3",
     "@raycast/utils": "^2.3.0",
@@ -67,6 +87,7 @@
     "diagrams": "node tools/gen-diagrams.mjs",
     "lint": "ray lint",
     "fix-lint": "ray lint --fix",
-    "icon": "node tools/gen-icon.mjs"
+    "icon": "node tools/gen-icon.mjs",
+    "screenshots": "node tools/gen-screenshots.mjs"
   }
 }

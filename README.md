@@ -92,6 +92,7 @@ npm run dev        # build and load into Raycast, with hot reload
 npm run build      # build and typecheck
 npm run diagrams   # regenerate assets/diagrams
 npm run icon       # regenerate assets/icon.png
+npm run screenshots # regenerate metadata/ store screenshots
 npm run lint
 ```
 
@@ -99,6 +100,12 @@ Diagrams and the icon are both generated rather than drawn. To change the diagra
 palette, edit `PAL` in `tools/gen-diagrams.mjs` and re-run `npm run diagrams`; all 42
 SVGs re-emit. Each diagram ships as a light and a dark file, and Raycast picks between
 them by the `@dark` filename suffix.
+
+Store screenshots in `metadata/` are generated too. The generator bundles the
+extension's own row-building code and feeds it a fixture config, so a screenshot
+cannot drift from what the extension renders, and it uses invented bindings and app
+names so nothing from a real machine ends up in the repo. It needs a Chromium-based
+browser installed, and writes 2000x1250 PNGs with transparent backgrounds.
 
 To teach the cheatsheet a command it does not know yet, add an entry to `ENTRIES` in
 `src/lib/dictionary.ts`. An entry is a regex against the command plus a label, a group,

@@ -42,8 +42,8 @@ export function rowMarkdown(row: Row): string {
   const diagram = diagramMarkdown(row.diagram, row.title);
   if (diagram) out.push(diagram, "");
 
-  if (row.entry?.blurb) out.push(row.entry.blurb, "");
-  if (row.entry?.teaches) out.push(row.entry.teaches, "");
+  if (row.blurb) out.push(row.blurb, "");
+  if (row.teaches) out.push(row.teaches, "");
 
   if (!row.entry) {
     out.push(

@@ -173,7 +173,11 @@ function storyboard(states, { W = 100, H = 64 } = {}) {
     s += screen(st.tree, { W, H, ox: x, label: st.label, labelSize: 9 });
     if (i < states.length - 1) {
       s += arrowGlyph(x + W + 10, H / 2, 20);
-      s += `<text x="${x + W + gapX / 2}" y="${H / 2 + 15}" font-size="9.5" font-weight="600" fill="${D.mid}" text-anchor="middle" font-family="${FONT}">${st.key}</text>`;
+      // Frames carry no key label: the diagram is a shared asset and the keystroke
+      // differs per user, so the step keys are rendered from live config alongside.
+      if (st.key) {
+        s += `<text x="${x + W + gapX / 2}" y="${H / 2 + 15}" font-size="9.5" font-weight="600" fill="${D.mid}" text-anchor="middle" font-family="${FONT}">${st.key}</text>`;
+      }
     }
     x += W + gapX;
   });

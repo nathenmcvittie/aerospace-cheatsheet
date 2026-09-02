@@ -4,3 +4,4 @@ dist/
 raycast-env.d.ts
 tools/test/harness.mjs
 *.tsbuildinfo
+tools/.screenshot-build/

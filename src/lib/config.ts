@@ -1,3 +1,4 @@
+import { getPreferenceValues } from "@raycast/api";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -24,11 +25,35 @@ const CONFIG_CANDIDATES = [
   join(homedir(), ".config", "aerospace", "aerospace.toml"),
 ];
 
+interface Preferences {
+  aerospacePath?: string;
+  configPath?: string;
+}
+
+/** Expand a leading `~` so a preference can be written the way a person types it. */
+function expandHome(path: string): string {
+  return path.startsWith("~") ? join(homedir(), path.slice(1)) : path;
+}
+
+function preference(name: keyof Preferences): string | undefined {
+  try {
+    const value = getPreferenceValues<Preferences>()[name]?.trim();
+    return value ? expandHome(value) : undefined;
+  } catch {
+    // Preferences are unavailable outside a Raycast command context (tests, tooling).
+    return undefined;
+  }
+}
+
 let cachedBinary: string | null = null;
 
 export async function aerospaceBinary(): Promise<string> {
   if (cachedBinary) return cachedBinary;
-  for (const candidate of BINARY_CANDIDATES) {
+
+  const configured = preference("aerospacePath");
+  const candidates = configured ? [configured, ...BINARY_CANDIDATES] : BINARY_CANDIDATES;
+
+  for (const candidate of candidates) {
     try {
       await exec(candidate, ["--version"]);
       cachedBinary = candidate;
@@ -38,7 +63,9 @@ export async function aerospaceBinary(): Promise<string> {
     }
   }
   throw new Error(
-    "Could not find the `aerospace` binary. Install AeroSpace, or set its path in this extension's preferences.",
+    configured
+      ? `No aerospace binary at ${configured}, and none at the usual locations. Check the AeroSpace Binary path in this extension's preferences.`
+      : "Could not find the aerospace binary. Install AeroSpace, or set its path in this extension's preferences (⌘, with this command selected).",
   );
 }
 
@@ -54,6 +81,9 @@ export async function aerospace(...args: string[]): Promise<string> {
  * probing the standard paths rather than failing outright.
  */
 export async function getConfigPath(): Promise<string> {
+  const configured = preference("configPath");
+  if (configured) return configured;
+
   try {
     const reported = await aerospace("config", "--config-path");
     if (reported) return reported.startsWith("~") ? join(homedir(), reported.slice(1)) : reported;
@@ -68,7 +98,9 @@ export async function getConfigPath(): Promise<string> {
       // try the next one
     }
   }
-  throw new Error("No AeroSpace config found at ~/.aerospace.toml or ~/.config/aerospace/aerospace.toml.");
+  throw new Error(
+    "No AeroSpace config found at ~/.aerospace.toml or ~/.config/aerospace/aerospace.toml. If yours lives elsewhere, set the Config File path in this extension's preferences.",
+  );
 }
 
 export interface Binding {
