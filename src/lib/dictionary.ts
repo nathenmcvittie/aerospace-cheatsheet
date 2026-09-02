@@ -32,14 +32,14 @@ export interface Group {
 
 export const GROUPS: Group[] = [
   { id: "recipes", title: "Recipes", subtitle: "goal → keys", tint: Color.Yellow },
-  { id: "build", title: "Build layout", subtitle: "multi-axis tiling", tint: Color.Purple },
+  { id: "build", title: "Build layout", subtitle: "shape the workspace", tint: Color.Purple },
   { id: "focus", title: "Focus", tint: Color.Blue },
   { id: "move", title: "Move window", tint: Color.Green },
   { id: "resize", title: "Resize", tint: Color.Orange },
   { id: "layout", title: "Layout mode", tint: Color.Magenta },
   { id: "workspaces", title: "Workspaces", tint: Color.Blue },
-  { id: "service", title: "Service mode", subtitle: "second tier", tint: Color.SecondaryText },
-  { id: "other", title: "Other", subtitle: "not in the dictionary", tint: Color.SecondaryText },
+  { id: "service", title: "Service mode", subtitle: "behind a mode switch", tint: Color.SecondaryText },
+  { id: "other", title: "Other", subtitle: "shown as written in your config", tint: Color.SecondaryText },
 ];
 
 export interface Entry {
@@ -53,7 +53,7 @@ export interface Entry {
   blurb: string;
   /** Diagram asset basename in assets/diagrams, without extension. */
   diagram?: string;
-  /** The rule this binding teaches — the thing you'd want to have known. */
+  /** How the command behaves, beyond the one-line description of what it does. */
   teaches?: string;
   /** Command that undoes it, as a plain-English phrase. */
   undo?: string;
@@ -95,9 +95,9 @@ export const ENTRIES: Entry[] = [
       down: "the window below",
     },
     teaches:
-      "The new container is laid out on the **opposite axis** to the one it sits in. Joining a left or right neighbour inside a row of columns therefore gives you a **top-to-bottom stack** — which is how you get a strip down one side and a stack beside it.",
+      "The new container always runs on the opposite axis to the one it sits in. So inside a row of columns, joining a left or right neighbour gives you a column of stacked windows. That is how you get a strip down one side with a stack beside it.",
     diagram: "join-$1",
-    undo: "Flatten the workspace tree",
+    undo: "Flatten all nesting",
     keywords: ["nest", "container", "split", "stack", "group"],
   },
   {
@@ -107,7 +107,7 @@ export const ENTRIES: Entry[] = [
     label: "Root axis → columns",
     blurb: "Lays the workspace's top-level windows out side by side.",
     teaches:
-      "This sets the axis of the **root** only. Nested containers keep alternating from it, so the children of a columns root are stacks.",
+      "This sets the axis of the root only. Containers nested inside it keep alternating, so the children of a columns root are stacks.",
     diagram: "root-columns",
     keywords: ["horizontal", "side by side", "vertical strip"],
   },
@@ -118,7 +118,7 @@ export const ENTRIES: Entry[] = [
     label: "Root axis → rows",
     blurb: "Stacks the workspace's top-level windows top to bottom.",
     teaches:
-      "This sets the axis of the **root** only. Nested containers keep alternating from it, so the children of a rows root sit side by side.",
+      "This sets the axis of the root only. Containers nested inside it keep alternating, so the children of a rows root sit side by side.",
     diagram: "root-rows",
     keywords: ["vertical", "stacked", "rows"],
   },
@@ -126,9 +126,9 @@ export const ENTRIES: Entry[] = [
     test: /^flatten-workspace-tree$/,
     group: "build",
     icon: Icon.Trash,
-    label: "Flatten — undo all nesting",
+    label: "Flatten all nesting",
     blurb: "Collapses every container so all windows become direct children of the root again.",
-    teaches: "The escape hatch. When a tree gets away from you, flatten and rebuild rather than unpicking it.",
+    teaches: "Quicker than unpicking a layout by hand. When the arrangement gets away from you, flatten it and build again.",
     diagram: "flatten",
     keywords: ["reset", "collapse", "start over", "unnest"],
   },
@@ -159,7 +159,7 @@ export const ENTRIES: Entry[] = [
     label: "Move window $1",
     blurb: "Moves the focused window $1, swapping with a plain neighbour.",
     teaches:
-      "If the neighbour is a **container**, the window moves *into* it rather than past it. That is how you add a third window to an existing stack.",
+      "If the neighbour is a container rather than a plain window, the window moves into it instead of past it. That is how you add a third window to a stack that already exists.",
     diagram: "move-$1",
     keywords: ["swap", "push", "reorder", "into stack"],
   },
@@ -180,7 +180,7 @@ export const ENTRIES: Entry[] = [
     icon: Icon.ArrowsExpand,
     label: "Resize along parent axis $1",
     blurb: "Grows or shrinks the window along whichever axis its parent container uses.",
-    teaches: "Ambiguous once the tree is nested — reach for the explicit width or height binding instead.",
+    teaches: "Once windows are nested, which axis this affects is hard to predict. The explicit width and height bindings are the safer reach.",
     keywords: ["smart", "grow", "shrink"],
     collapse: "pair",
   },
@@ -217,7 +217,7 @@ export const ENTRIES: Entry[] = [
     group: "layout",
     icon: Icon.AppWindowList,
     label: "Toggle accordion",
-    blurb: "Switches the container to accordion — windows overlap with only the focused one expanded.",
+    blurb: "Switches the container to accordion, so windows overlap with only the focused one expanded.",
     keywords: ["tabs", "tabbed", "stack", "overlap"],
   },
   {
@@ -280,7 +280,7 @@ export const ENTRIES: Entry[] = [
     group: "service",
     icon: Icon.Cog,
     label: "Enter $1 mode",
-    blurb: "Switches to the $1 binding mode — its keys become live until you leave it.",
+    blurb: "Switches to the $1 binding mode. Its keys stay live until you leave it.",
     keywords: ["mode", "layer"],
   },
   {

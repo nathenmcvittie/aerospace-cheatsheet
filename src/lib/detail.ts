@@ -43,7 +43,7 @@ export function rowMarkdown(row: Row): string {
   if (diagram) out.push(diagram, "");
 
   if (row.entry?.blurb) out.push(row.entry.blurb, "");
-  if (row.entry?.teaches) out.push(`**Worth knowing** — ${row.entry.teaches}`, "");
+  if (row.entry?.teaches) out.push(row.entry.teaches, "");
 
   if (!row.entry) {
     out.push(
@@ -74,7 +74,7 @@ export function recipeMarkdown(recipe: ResolvedRecipe, { storyboard = false } = 
 
   recipe.resolved.forEach((step, index) => {
     const key = step.unbound ? "_not bound_" : step.keys ? `\`${step.keys}\`` : "";
-    out.push(`${index + 1}. ${key}${key ? " — " : ""}${step.instruction}`);
+    out.push(`${index + 1}. ${key}${key ? ": " : ""}${step.instruction}`);
   });
 
   return out.join("\n");

@@ -2,17 +2,20 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "aerospace-cheatsheet",
   "title": "AeroSpace Cheatsheet",
-  "description": "A readable cheatsheet for your AeroSpace window manager keybindings, with layout diagrams and goal-oriented recipes. Reads your own config, so it works on any keybindings.",
+  "description": "Look up, learn, and run your AeroSpace keybindings. Reads your own config, so every key it shows is one you actually have.",
   "icon": "icon.png",
   "author": "nathenmcvittie",
-  "categories": ["Productivity", "System"],
+  "categories": [
+    "Productivity",
+    "System"
+  ],
   "license": "MIT",
   "commands": [
     {
       "name": "cheatsheet",
       "title": "AeroSpace Cheatsheet",
       "subtitle": "AeroSpace",
-      "description": "Browse your keybindings grouped and explained, with layout diagrams and recipes",
+      "description": "Your bindings, grouped and named, with layout diagrams and recipes",
       "mode": "view"
     },
     {
@@ -63,6 +66,7 @@
     "dev": "ray develop",
     "diagrams": "node tools/gen-diagrams.mjs",
     "lint": "ray lint",
-    "fix-lint": "ray lint --fix"
+    "fix-lint": "ray lint --fix",
+    "icon": "node tools/gen-icon.mjs"
   }
 }
