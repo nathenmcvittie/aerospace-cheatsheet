@@ -1,6 +1,7 @@
 import { Action, ActionPanel, Color, Icon, List, closeMainWindow, showToast, Toast } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { focusWorkspace, listWindows, listWorkspaces } from "./lib/workspaces";
+import { ServerUnavailable } from "./serverState";
 
 export default function Command() {
   const { data, isLoading, error, revalidate } = useCachedPromise(async () => {
@@ -12,7 +13,7 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Jump to a workspace…">
-      {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
+      {error && <ServerUnavailable error={error} onRecovered={revalidate} />}
 
       <List.Section title="In use">
         {(data?.workspaces ?? [])

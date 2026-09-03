@@ -8,6 +8,7 @@ import {
   moveWorkspaceToMonitor,
   workspaceMonitors,
 } from "./lib/workspaces";
+import { ServerUnavailable } from "./serverState";
 
 /**
  * Pull a workspace onto the display you are looking at.
@@ -36,7 +37,7 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Bring a workspace to this display…">
-      {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
+      {error && <ServerUnavailable error={error} onRecovered={revalidate} />}
 
       {singleMonitor && !error && (
         <List.EmptyView

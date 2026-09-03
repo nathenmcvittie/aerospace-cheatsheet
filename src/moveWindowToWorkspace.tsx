@@ -2,6 +2,7 @@ import { Action, ActionPanel, Color, Icon, List, closeMainWindow, showHUD } from
 import { useCachedPromise } from "@raycast/utils";
 import { useState } from "react";
 import { listWindows, listWorkspaces, moveFocusedWindowToWorkspace } from "./lib/workspaces";
+import { ServerUnavailable } from "./serverState";
 
 /**
  * Send the focused window to a workspace, including one that does not exist yet.
@@ -37,7 +38,7 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading} onSearchTextChange={setQuery} searchBarPlaceholder="Move the focused window to…">
-      {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
+      {error && <ServerUnavailable error={error} />}
 
       {isNew && (
         <List.Section title="Create">

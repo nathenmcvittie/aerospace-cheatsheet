@@ -6,6 +6,7 @@ import { lookup, normalise } from "../src/lib/dictionary";
 import { RECIPES, resolveRecipe } from "../src/lib/recipes";
 import { rowMarkdown } from "../src/lib/detail";
 import { tokenise } from "../src/lib/config";
+import { isServerDisabled } from "../src/serverState";
 import type { Binding } from "../src/lib/config";
 
 const THIN = " ";
@@ -313,6 +314,23 @@ describe("command tokenising", () => {
   it("returns nothing for an empty or whitespace-only command", () => {
     assert.deepEqual(tokenise(""), []);
     assert.deepEqual(tokenise("   "), []);
+  });
+});
+
+describe("server state detection", () => {
+  it("recognises AeroSpace's disabled-server message", () => {
+    // Verified against the real CLI: this is the exact wording it returns.
+    const real = new Error(
+      "Command failed: aerospace list-workspaces\nAeroSpace server is disabled and doesn't accept commands. You can use 'aerospace enable on' to enable the server",
+    );
+    assert.equal(isServerDisabled(real), true);
+  });
+
+  it("does not mistake an ordinary failure for a disabled server", () => {
+    assert.equal(isServerDisabled(new Error("spawn aerospace ENOENT")), false);
+    assert.equal(isServerDisabled(new Error("No AeroSpace config found")), false);
+    assert.equal(isServerDisabled(undefined), false);
+    assert.equal(isServerDisabled(null), false);
   });
 });
 

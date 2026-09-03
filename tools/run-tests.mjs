@@ -23,6 +23,11 @@ writeFileSync(stub, [
   `export const Color=new Proxy({},h);`,
   `export const Icon=new Proxy({},h);`,
   `export function getPreferenceValues(){throw new Error("no preferences outside Raycast");}`,
+  `export const Action=new Proxy(function(){},h);`,
+  `export const ActionPanel=new Proxy(function(){},h);`,
+  `export const List=new Proxy(function(){},h);`,
+  `export const Toast={Style:new Proxy({},h)};`,
+  `export function showToast(){}`,
   ``,
 ].join('\n'));
 

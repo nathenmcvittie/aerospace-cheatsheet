@@ -2,6 +2,7 @@ import { Action, ActionPanel, Color, Icon, List, closeMainWindow, showToast, Toa
 import { useCachedPromise } from "@raycast/utils";
 import { aerospace } from "./lib/config";
 import { focusWindow, listWindows, listWorkspaces } from "./lib/workspaces";
+import { ServerUnavailable } from "./serverState";
 
 /**
  * Every open window, grouped by the workspace it lives on.
@@ -23,7 +24,7 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Focus a window…">
-      {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
+      {error && <ServerUnavailable error={error} onRecovered={revalidate} />}
       {!isLoading && !error && windows.length === 0 && <List.EmptyView icon={Icon.AppWindow} title="No open windows" />}
 
       {order.map((workspace) => (
