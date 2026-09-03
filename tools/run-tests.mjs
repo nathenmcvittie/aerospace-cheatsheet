@@ -31,17 +31,17 @@ writeFileSync(stub, [
   ``,
 ].join('\n'));
 
-const bundle = join(OUT, 'lib.test.mjs');
 await build({
-  entryPoints: [join(ROOT, 'tests', 'lib.test.ts')],
-  bundle: true, format: 'esm', platform: 'node', outfile: bundle,
+  entryPoints: [join(ROOT, 'tests', 'lib.test.ts'), join(ROOT, 'tests', 'editConfig.test.ts')],
+  bundle: true, format: 'esm', platform: 'node', outdir: OUT,
   alias: { '@raycast/api': stub },
   external: ['node:*'],
   logLevel: 'error',
 });
 
 try {
-  const { stdout, stderr } = await exec(process.execPath, ['--test', bundle], { maxBuffer: 32 * 1024 * 1024 });
+  const files = ['lib.test.js', 'editConfig.test.js'].map((f) => join(OUT, f));
+  const { stdout, stderr } = await exec(process.execPath, ['--test', ...files], { maxBuffer: 32 * 1024 * 1024 });
   process.stdout.write(stdout); process.stderr.write(stderr);
 } catch (e) {
   process.stdout.write(e.stdout ?? ''); process.stderr.write(e.stderr ?? '');

@@ -1,5 +1,5 @@
 import { getPreferenceValues } from "@raycast/api";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -152,6 +152,36 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
  * the bare command would work but would leave the user's understanding of the mode
  * out of sync with what they just saw happen.
  */
+/**
+ * Writes new config text, and undoes it if AeroSpace rejects it.
+ *
+ * The caller has already re-parsed the text, so this guards the remaining failure:
+ * text that is valid TOML but not a valid AeroSpace config (an unknown command, a key
+ * name that does not exist). `reload-config --dry-run` is the only thing that knows
+ * the difference, and it only reads from disk, so the file has to be written before it
+ * can be asked. The original is held in memory and put back on rejection.
+ *
+ * Writing follows symlinks, which is intended: a config symlinked into a dotfiles repo
+ * should be edited in place there, not replaced with a regular file.
+ */
+export async function saveConfig(raw: string): Promise<void> {
+  const configPath = await getConfigPath();
+  const original = await readFile(configPath, "utf-8");
+  if (original === raw) return;
+
+  await writeFile(configPath, raw, "utf-8");
+  try {
+    await aerospace("reload-config", "--dry-run");
+  } catch (e) {
+    await writeFile(configPath, original, "utf-8");
+    const detail = e instanceof Error ? (e.message.trim().split("\n").pop() ?? "") : String(e);
+    throw new Error(`AeroSpace rejected the change, so nothing was saved. ${detail}`);
+  }
+  // The config may set auto-reload-config, in which case this is redundant but
+  // harmless, and it is the only thing that applies the change when it does not.
+  await aerospace("reload-config").catch(() => undefined);
+}
+
 /**
  * Splits a command into arguments, respecting quotes.
  *

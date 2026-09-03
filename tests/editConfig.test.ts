@@ -1,0 +1,184 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { parse } from "smol-toml";
+import { addBinding, findBindingLine, removeBinding, toTomlValue, updateBinding, verifyEdit } from "../src/lib/editConfig";
+
+/** A config shaped like a real one: comments, blank lines, aligned columns, arrays. */
+const CONFIG = `# ~/.aerospace.toml
+config-version = 2
+auto-reload-config = true
+
+gaps.inner.horizontal = 8
+
+[mode.main.binding]
+
+    # --- Move focus ---
+    ctrl-alt-left  = 'focus left'
+    ctrl-alt-right = 'focus right'
+    ctrl-alt-h     = 'focus left'
+
+    ctrl-alt-c = 'layout --root h_tiles'   # ⌃⌥C  Columns
+    ctrl-alt-r = 'layout --root v_tiles'   # ⌃⌥R  Rows
+
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+    r   = ['flatten-workspace-tree', 'mode main']
+
+[[on-window-detected]]
+    if.app-id = 'com.apple.finder'
+    run = 'layout floating'
+`;
+
+describe("editConfig — locating", () => {
+  it("finds a binding inside the right mode", () => {
+    assert.notEqual(findBindingLine(CONFIG, "main", "ctrl-alt-c"), -1);
+    assert.notEqual(findBindingLine(CONFIG, "service", "esc"), -1);
+  });
+
+  it("does not find a binding from a different mode", () => {
+    assert.equal(findBindingLine(CONFIG, "main", "esc"), -1);
+    assert.equal(findBindingLine(CONFIG, "service", "ctrl-alt-c"), -1);
+  });
+
+  it("does not match a key that merely shares a prefix", () => {
+    // ctrl-alt-r must not match the line for ctrl-alt-right.
+    const line = findBindingLine(CONFIG, "main", "ctrl-alt-r");
+    assert.match(CONFIG.split("\n")[line], /layout --root v_tiles/);
+  });
+
+  it("stops at the section boundary", () => {
+    assert.equal(findBindingLine(CONFIG, "main", "run"), -1, "leaked into [[on-window-detected]]");
+  });
+});
+
+describe("editConfig — preserving the file", () => {
+  it("changes only the one line it was asked to", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", {
+      key: "ctrl-alt-c",
+      command: "layout --root v_tiles",
+    });
+    const before = CONFIG.split("\n");
+    const after = raw.split("\n");
+    assert.equal(before.length, after.length);
+    const changed = before.map((l, i) => (l === after[i] ? null : i)).filter((i) => i !== null);
+    assert.equal(changed.length, 1, `expected 1 changed line, got ${changed.length}`);
+  });
+
+  it("keeps the trailing comment and the column alignment", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", {
+      key: "ctrl-alt-c",
+      command: "layout --root v_tiles",
+    });
+    const line = raw.split("\n").find((l) => l.includes("ctrl-alt-c")) ?? "";
+    assert.match(line, /# ⌃⌥C {2}Columns$/, "trailing comment was lost");
+    assert.match(line, /^ {4}ctrl-alt-c = /, "indentation or alignment changed");
+  });
+
+  it("keeps every comment in the file", () => {
+    const comments = (text: string) => text.split("\n").filter((l) => l.includes("#")).length;
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-left", {
+      key: "ctrl-alt-left",
+      command: "focus down",
+    });
+    assert.equal(comments(raw), comments(CONFIG));
+  });
+
+  it("preserves the alignment padding on a padded line", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-left", {
+      key: "ctrl-alt-left",
+      command: "focus down",
+    });
+    assert.match(raw, /ctrl-alt-left {2}= 'focus down'/, "the two-space alignment was lost");
+  });
+});
+
+describe("editConfig — values", () => {
+  it("writes a single command as a string and a sequence as an array", () => {
+    assert.equal(toTomlValue("focus left"), "'focus left'");
+    assert.equal(toTomlValue("join-with left; mode main"), "['join-with left', 'mode main']");
+  });
+
+  it("round-trips an array binding without flattening it", () => {
+    const { raw } = updateBinding(CONFIG, "service", "esc", {
+      key: "esc",
+      command: "reload-config; mode main",
+    });
+    const parsed = parse(raw) as never as { mode: { service: { binding: Record<string, unknown> } } };
+    assert.deepEqual(parsed.mode.service.binding.esc, ["reload-config", "mode main"]);
+  });
+
+  it("switches quoting when the command contains an apostrophe", () => {
+    assert.equal(toTomlValue("exec-and-forget echo it's"), '"exec-and-forget echo it\'s"');
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", {
+      key: "ctrl-alt-c",
+      command: "exec-and-forget echo it's",
+    });
+    assert.doesNotThrow(() => parse(raw), "produced invalid TOML");
+  });
+});
+
+describe("editConfig — add, remove, rebind", () => {
+  it("adds a binding using the section's own indentation", () => {
+    const { raw } = addBinding(CONFIG, "main", "ctrl-alt-b", "balance-sizes");
+    assert.match(raw, /^ {4}ctrl-alt-b = 'balance-sizes'$/m);
+    const parsed = parse(raw) as never as { mode: { main: { binding: Record<string, unknown> } } };
+    assert.equal(parsed.mode.main.binding["ctrl-alt-b"], "balance-sizes");
+  });
+
+  it("refuses to add a key that is already bound", () => {
+    assert.throws(() => addBinding(CONFIG, "main", "ctrl-alt-c", "fullscreen"), /already bound/);
+  });
+
+  it("creates the section when the mode has none", () => {
+    const { raw } = addBinding(CONFIG, "resize", "h", "resize width -50");
+    const parsed = parse(raw) as never as { mode: { resize: { binding: Record<string, unknown> } } };
+    assert.equal(parsed.mode.resize.binding.h, "resize width -50");
+    assert.doesNotThrow(() => parse(raw));
+  });
+
+  it("removes exactly one line", () => {
+    const { raw } = removeBinding(CONFIG, "main", "ctrl-alt-c");
+    assert.equal(raw.split("\n").length, CONFIG.split("\n").length - 1);
+    assert.equal(findBindingLine(raw, "main", "ctrl-alt-c"), -1);
+    assert.notEqual(findBindingLine(raw, "main", "ctrl-alt-r"), -1, "removed a neighbour too");
+  });
+
+  it("rebinds to a different key without touching the command", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", {
+      key: "ctrl-alt-shift-c",
+      command: "layout --root h_tiles",
+    });
+    const parsed = parse(raw) as never as { mode: { main: { binding: Record<string, unknown> } } };
+    assert.equal(parsed.mode.main.binding["ctrl-alt-shift-c"], "layout --root h_tiles");
+    assert.equal(parsed.mode.main.binding["ctrl-alt-c"], undefined);
+  });
+
+  it("throws rather than silently doing nothing for a missing binding", () => {
+    assert.throws(() => updateBinding(CONFIG, "main", "alt-nope", { key: "alt-nope", command: "x" }), /No binding/);
+    assert.throws(() => removeBinding(CONFIG, "main", "alt-nope"), /No binding/);
+  });
+});
+
+describe("editConfig — verification gate", () => {
+  it("accepts an edit that landed as intended", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });
+    assert.deepEqual(verifyEdit(raw, "main", "ctrl-alt-c", "fullscreen"), { ok: true });
+  });
+
+  it("rejects text that is not valid TOML", () => {
+    const result = verifyEdit("[mode.main.binding\nbroken", "main", "x", "y");
+    assert.equal(result.ok, false);
+  });
+
+  it("rejects an edit whose result does not match what was asked for", () => {
+    const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });
+    const result = verifyEdit(raw, "main", "ctrl-alt-c", "balance-sizes");
+    assert.equal(result.ok, false);
+  });
+
+  it("confirms a removal actually removed it", () => {
+    const { raw } = removeBinding(CONFIG, "main", "ctrl-alt-c");
+    assert.deepEqual(verifyEdit(raw, "main", "ctrl-alt-c", null), { ok: true });
+    assert.equal(verifyEdit(CONFIG, "main", "ctrl-alt-c", null).ok, false);
+  });
+});

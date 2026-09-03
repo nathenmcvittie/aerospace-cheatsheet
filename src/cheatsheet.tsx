@@ -7,10 +7,11 @@ import { recipeMarkdown, rowMarkdown } from "./lib/detail";
 import { RECIPES, resolveRecipe, type ResolvedRecipe } from "./lib/recipes";
 import { buildRows, type Row } from "./lib/rows";
 import { Walkthrough } from "./walkthrough";
+import { EditBinding } from "./editBinding";
 
 export default function Command() {
   const [group, setGroup] = useState<GroupId | "all">("all");
-  const { data, isLoading, error } = useCachedPromise(async () => {
+  const { data, isLoading, error, revalidate } = useCachedPromise(async () => {
     const { bindings, configPath } = await loadBindings();
     return {
       configPath,
@@ -67,7 +68,7 @@ export default function Command() {
         return (
           <List.Section key={g.id} title={g.title} subtitle={g.subtitle}>
             {groupRows.map((row) => (
-              <RowItem key={row.id} row={row} tint={g.tint} configPath={data?.configPath} />
+              <RowItem key={row.id} row={row} tint={g.tint} configPath={data?.configPath} onChanged={revalidate} />
             ))}
           </List.Section>
         );
@@ -98,7 +99,20 @@ function RecipeItem({ recipe }: { recipe: ResolvedRecipe }) {
   );
 }
 
-function RowItem({ row, tint, configPath }: { row: Row; tint: Color; configPath?: string }) {
+function RowItem({
+  row,
+  tint,
+  configPath,
+  onChanged,
+}: {
+  row: Row;
+  tint: Color;
+  configPath?: string;
+  onChanged: () => void;
+}) {
+  const { push } = useNavigation();
+  // A merged row stands for several bindings; edit the one whose key leads the row.
+  const primary = row.bindings[0];
   return (
     <List.Item
       icon={{ source: row.icon, tintColor: tint }}
@@ -153,6 +167,25 @@ function RowItem({ row, tint, configPath }: { row: Row; tint: Color; configPath?
                   });
                 }
               }}
+            />
+            <Action
+              title="Edit Binding"
+              icon={Icon.Pencil}
+              shortcut={Keyboard.Shortcut.Common.Edit}
+              onAction={() =>
+                push(
+                  <EditBinding
+                    target={{ mode: primary.mode, key: primary.key, command: primary.command }}
+                    onSaved={onChanged}
+                  />,
+                )
+              }
+            />
+            <Action
+              title="Add Binding"
+              icon={Icon.Plus}
+              shortcut={Keyboard.Shortcut.Common.New}
+              onAction={() => push(<EditBinding target={{ mode: primary.mode }} onSaved={onChanged} />)}
             />
             <Action.CopyToClipboard title="Copy Keys" content={row.keys.map((k) => k.display).join(" / ")} />
             <Action.CopyToClipboard

@@ -77,6 +77,12 @@ Each step names the key from your config.
 **Nothing gets hidden.** A binding the extension doesn't recognise still appears, under
 "Other", showing its raw command.
 
+**Edit without leaving Raycast.** `⌘E` on any row opens a two-field form for that
+binding's key and command; `⌘N` adds a new one. Saving rewrites the single line in your
+`aerospace.toml` and leaves every other byte alone, comments and column alignment
+included. The change is re-parsed, then applied with `reload-config`, and if AeroSpace
+rejects it your config is restored exactly as it was.
+
 ## Working from your config
 
 Every row is matched by AeroSpace *command*, never by keystroke, which is what lets the
@@ -86,6 +92,16 @@ config rather than baked into the picture.
 
 Recipes are resolved the same way. If a recipe needs a command you have not bound to
 anything, the step says so instead of printing a key that does nothing.
+
+### A note on editing
+
+Edits are made line by line on the raw text, never by parsing the file and writing it
+back out. A round-trip through a TOML serialiser produces a valid file that has thrown
+away every comment, blank line and hand-aligned column, which for a config people write
+and annotate by hand is a destructive thing to do quietly.
+
+If your config is a symlink (a dotfiles repo, say) the write follows it, so edits land
+in the real file and show up in that repo as changes.
 
 ## Install
 
