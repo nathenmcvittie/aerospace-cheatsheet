@@ -4,6 +4,9 @@
   "title": "AeroSpace Cheatsheet",
   "description": "Look up, learn, run, and edit your AeroSpace keybindings. Reads your own config, so every key it shows is one you actually have.",
   "icon": "icon.png",
+  "platforms": [
+    "macOS"
+  ],
   "author": "nmcv",
   "categories": [
     "Productivity",

@@ -53,6 +53,8 @@ export interface Entry {
    * "Join with $1 neighbour" produces "Join with down neighbour".
    */
   phrases?: Record<string, string>;
+  /** Shorter wording for the row title, where horizontal space is tight. */
+  titlePhrases?: Record<string, string>;
   /** Extra search terms. */
   keywords?: string[];
   /**
@@ -77,7 +79,9 @@ export const ENTRIES: Entry[] = [
     test: new RegExp(`^join-with ${DIRECTION}$`),
     group: "build",
     icon: Icon.PlusSquare,
-    label: "Join with $1",
+    // Kept short: the list pane is ~333px, and a longer label truncated mid-word.
+    // The full phrasing still appears in the blurb, where there is room for it.
+    label: "Join $1",
     blurb: "Pulls the focused window and $1 under one new container, so they share a slot in the parent.",
     phrases: {
       left: "the window to its left",
@@ -85,6 +89,7 @@ export const ENTRIES: Entry[] = [
       up: "the window above",
       down: "the window below",
     },
+    titlePhrases: { left: "left", right: "right", up: "above", down: "below" },
     teaches:
       "The new container always runs on the opposite axis to the one it sits in. So inside a row of columns, joining a left or right neighbour gives you a column of stacked windows. That is how you get a strip down one side with a stack beside it.",
     diagram: "join-$1",

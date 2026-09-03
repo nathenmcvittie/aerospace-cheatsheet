@@ -41,20 +41,31 @@ const C = {
 };
 // Diagram palettes — one per theme. Raycast swaps `foo.svg` ↔ `foo@dark.svg` automatically,
 // so each palette is tuned for its own ground instead of compromising on a middle gray.
+// Colours are [hex, opacity] and are emitted as separate `fill`/`fill-opacity`
+// attributes. NOT as rgba().
+//
+// `fill="rgba(255,255,255,0.2)"` is CSS Color 4, which browsers accept in an SVG
+// presentation attribute but plain SVG does not. Raycast's renderer rejects the value
+// and falls back to BLACK, so every window in every diagram painted solid black while
+// looking correct in a browser. Found by sampling a real capture: the fill measured
+// rgb(0,0,0) against a rgb(58,58,59) pane, which no alpha over that ground can produce.
 const PAL = {
   dark: {
-    mid: '#98989d',
-    winFill: 'rgba(255,255,255,0.10)', winStroke: 'rgba(255,255,255,0.58)',
-    screen: 'rgba(255,255,255,0.28)',
-    acc: '#0a84ff', accFill: 'rgba(10,132,255,0.30)', partnerFill: 'rgba(10,132,255,0.12)',
+    mid: ['#98989d', 1],
+    winFill: ['#ffffff', 0.2], winStroke: ['#ffffff', 0.78],
+    screen: ['#ffffff', 0.4],
+    acc: ['#409cff', 1], accFill: ['#0a84ff', 0.42], partnerFill: ['#0a84ff', 0.18],
   },
   light: {
-    mid: '#6e6e73',
-    winFill: 'rgba(0,0,0,0.07)', winStroke: 'rgba(0,0,0,0.52)',
-    screen: 'rgba(0,0,0,0.26)',
-    acc: '#007aff', accFill: 'rgba(0,122,255,0.18)', partnerFill: 'rgba(0,122,255,0.07)',
+    mid: ['#6e6e73', 1],
+    winFill: ['#000000', 0.07], winStroke: ['#000000', 0.52],
+    screen: ['#000000', 0.26],
+    acc: ['#007aff', 1], accFill: ['#007aff', 0.18], partnerFill: ['#007aff', 0.07],
   },
 };
+
+/** `fill`/`stroke` plus its matching `-opacity`, omitting opacity when fully opaque. */
+const paint = (kind, [hex, alpha]) => `${kind}="${hex}"${alpha < 1 ? ` ${kind}-opacity="${alpha}"` : ''}`;
 let D = PAL.dark;
 function withD(theme, fn) { const prev = D; D = PAL[theme]; try { return fn(); } finally { D = prev; } }
 
@@ -124,34 +135,34 @@ function placeTree(node, x, y, w, h, gap, out, depth) {
 function screen(tree, { W = 132, H = 84, inset = 6, gap = 4, ox = 0, oy = 0, label, labelSize = 10 } = {}) {
   const parts = [];
   placeTree(tree, ox + inset, oy + inset, W - inset * 2, H - inset * 2, gap, parts, 0);
-  let s = `<rect x="${ox + .5}" y="${oy + .5}" width="${W - 1}" height="${H - 1}" rx="6" fill="none" stroke="${D.screen}" stroke-width="1"/>`;
+  let s = `<rect x="${ox + .5}" y="${oy + .5}" width="${W - 1}" height="${H - 1}" rx="6" fill="none" ${paint('stroke', D.screen)} stroke-width="1"/>`;
   // containers first (behind), then windows
   for (const p of parts.filter(p => p.type === 'container')) {
-    s += `<rect x="${p.x - 2.5}" y="${p.y - 2.5}" width="${p.w + 5}" height="${p.h + 5}" rx="4.5" fill="none" stroke="${p.hi ? D.acc : D.mid}" stroke-width="1" stroke-dasharray="2.5 2" opacity="${p.hi ? .9 : .75}"/>`;
+    s += `<rect x="${p.x - 2.5}" y="${p.y - 2.5}" width="${p.w + 5}" height="${p.h + 5}" rx="4.5" fill="none" ${paint('stroke', p.hi ? D.acc : D.mid)} stroke-width="1" stroke-dasharray="2.5 2" opacity="${p.hi ? .9 : .75}"/>`;
   }
   for (const p of parts.filter(p => p.type === 'win')) {
     const fill = p.focus ? D.accFill : p.partner ? D.partnerFill : D.winFill;
     const stroke = p.focus || p.partner ? D.acc : D.winStroke;
     const sw = p.focus ? 1.75 : 1.25;
     const dash = p.partner ? ' stroke-dasharray="3 2"' : '';
-    s += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash}/>`;
-    if (p.id) s += `<text x="${p.x + p.w / 2}" y="${p.y + p.h / 2}" font-size="${labelSize}" font-weight="${p.focus ? 600 : 500}" fill="${p.focus ? D.acc : D.mid}" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,Arial,sans-serif">${p.id}</text>`;
+    s += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="3" ${paint('fill', fill)} ${paint('stroke', stroke)} stroke-width="${sw}"${dash}/>`;
+    if (p.id) s += `<text x="${p.x + p.w / 2}" y="${p.y + p.h / 2}" font-size="${labelSize}" font-weight="${p.focus ? 600 : 500}" ${paint('fill', p.focus ? D.acc : D.mid)} text-anchor="middle" dominant-baseline="central" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,Arial,sans-serif">${p.id}</text>`;
     if (p.arrow) {
       const cx = p.x + p.w / 2, cy = p.y + p.h / 2, L = 14;
       const dx = { left: -1, right: 1, up: 0, down: 0 }[p.arrow], dy = { left: 0, right: 0, up: -1, down: 1 }[p.arrow];
       const x1 = cx + dx * (p.w / 2 - 4), y1 = cy + dy * (p.h / 2 - 4);
       const x2 = x1 + dx * L, y2 = y1 + dy * L;
-      s += `<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${D.acc}" stroke-width="1.75" stroke-linecap="round"/>`;
+      s += `<path d="M${x1} ${y1}L${x2} ${y2}" ${paint('stroke', D.acc)} stroke-width="1.75" stroke-linecap="round"/>`;
       const hx = -dy, hy = dx; // perpendicular
-      s += `<path d="M${x2 - dx * 4 + hx * 3.5} ${y2 - dy * 4 + hy * 3.5}L${x2} ${y2}L${x2 - dx * 4 - hx * 3.5} ${y2 - dy * 4 - hy * 3.5}" fill="none" stroke="${D.acc}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>`;
+      s += `<path d="M${x2 - dx * 4 + hx * 3.5} ${y2 - dy * 4 + hy * 3.5}L${x2} ${y2}L${x2 - dx * 4 - hx * 3.5} ${y2 - dy * 4 - hy * 3.5}" fill="none" ${paint('stroke', D.acc)} stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>`;
     }
   }
-  if (label) s += `<text x="${ox + W / 2}" y="${oy + H + 12}" font-size="9.5" fill="${D.mid}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,Arial,sans-serif">${label}</text>`;
+  if (label) s += `<text x="${ox + W / 2}" y="${oy + H + 12}" font-size="9.5" ${paint('fill', D.mid)} text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,Arial,sans-serif">${label}</text>`;
   return s;
 }
 const FONT = `-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,Arial,sans-serif`;
 function arrowGlyph(x, y, w = 22) {
-  return `<path d="M${x} ${y}h${w - 5}M${x + w - 10} ${y - 4.5}l5 4.5-5 4.5" fill="none" stroke="${D.mid}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<path d="M${x} ${y}h${w - 5}M${x + w - 10} ${y - 4.5}l5 4.5-5 4.5" fill="none" ${paint('stroke', D.mid)} stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 function svgWrap(w, h, inner) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
@@ -161,7 +172,7 @@ function beforeAfter(before, after, { W = 132, H = 84, keys } = {}) {
   const gapX = 44, h = H + 18;
   let s = screen(before, { W, H, label: 'before' });
   s += arrowGlyph(W + 11, H / 2, 22);
-  if (keys) s += `<text x="${W + gapX / 2}" y="${H / 2 + 16}" font-size="9.5" fill="${D.mid}" text-anchor="middle" font-family="${FONT}">${keys}</text>`;
+  if (keys) s += `<text x="${W + gapX / 2}" y="${H / 2 + 16}" font-size="9.5" ${paint('fill', D.mid)} text-anchor="middle" font-family="${FONT}">${keys}</text>`;
   s += screen(after, { W, H, ox: W + gapX, label: 'after' });
   return svgWrap(W * 2 + gapX, h, s);
 }
@@ -176,7 +187,7 @@ function storyboard(states, { W = 100, H = 64 } = {}) {
       // Frames carry no key label: the diagram is a shared asset and the keystroke
       // differs per user, so the step keys are rendered from live config alongside.
       if (st.key) {
-        s += `<text x="${x + W + gapX / 2}" y="${H / 2 + 15}" font-size="9.5" font-weight="600" fill="${D.mid}" text-anchor="middle" font-family="${FONT}">${st.key}</text>`;
+        s += `<text x="${x + W + gapX / 2}" y="${H / 2 + 15}" font-size="9.5" font-weight="600" ${paint('fill', D.mid)} text-anchor="middle" font-family="${FONT}">${st.key}</text>`;
       }
     }
     x += W + gapX;

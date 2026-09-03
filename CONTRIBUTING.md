@@ -72,7 +72,37 @@ dotfiles repo, and which controls whether the user's windows work.
   array values. Asserting "the file still parses" is not enough; assert that exactly
   one line changed and that its trailing comment survived.
 
-## Rule 4 — check the CLI's real output, not its documentation
+## Rule 4 — verify UI against a real capture, not a mock
+
+Two bugs shipped past a build, a type-check, 61 tests and a lint run, and both were
+obvious the first time the extension was photographed running:
+
+- Row titles were truncated. "Join with the window to its right" is 33 characters and
+  the list pane is ~333px, so it rendered as "Join with the windo...". Labels are short
+  now, with the full phrasing in the detail pane where there is room.
+- Every diagram rendered as near-invisible dark boxes, because Raycast does **not**
+  apply the `@dark` filename convention to images inside markdown, only to icons. The
+  light asset, whose fills are black at 7% opacity, was being drawn on a dark pane.
+  `src/lib/detail.ts` now picks the variant from `environment.appearance`.
+
+To capture: `open "raycast://extensions/<author>/<extension>/<command>"`, find the
+window with Quartz's `CGWindowListCopyWindowInfo`, then `screencapture -x -o -l<id>`.
+Measuring a pixel beats squinting: sampling the pane at rgb(58,58,59) against a fill of
+rgb(54,54,54) is what identified the wrong asset, since no alpha over that ground can
+land below it.
+
+**Raycast caches rendered markdown images in WebKit and neither restarting Raycast nor
+restarting `ray develop` clears it.** Several diagnostic passes were wasted on stale
+images that looked like unchanged output. Clear it with:
+
+```sh
+osascript -e 'quit app "Raycast"'
+rm -rf ~/Library/Caches/com.raycast.macos/WebKit/NetworkCache
+rm -rf ~/Library/Caches/com.raycast.macos/fsCachedData
+open -a Raycast
+```
+
+## Rule 5 — check the CLI's real output, not its documentation
 
 `aerospace list-windows --all --json` does **not** include the workspace unless
 `--format` asks for it. That silently broke four commands, and nothing in the types or

@@ -28,6 +28,7 @@ writeFileSync(stub, [
   `export const List=new Proxy(function(){},h);`,
   `export const Toast={Style:new Proxy({},h)};`,
   `export function showToast(){}`,
+  `export const environment={appearance:'dark'};`,
   ``,
 ].join('\n'));
 

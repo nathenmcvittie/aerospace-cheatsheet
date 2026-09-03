@@ -1,3 +1,4 @@
+import { environment } from "@raycast/api";
 import SIZES from "./diagram-sizes.json";
 import type { Row } from "./rows";
 import type { ResolvedRecipe } from "./recipes";
@@ -17,15 +18,32 @@ type SizeMap = Record<string, [number, number]>;
 const sizes = SIZES as SizeMap;
 
 /**
- * Reference the light asset only — Raycast automatically substitutes the `@dark`
- * twin. Width and height are pinned to the SVG's intrinsic size so the pane never
- * stretches it.
+ * Picks the theme variant explicitly, rather than relying on the `@dark` filename.
+ *
+ * Raycast applies that convention to icons but NOT to images inside markdown, so the
+ * light asset was being served on a dark UI: its fills are black at 7% opacity, which
+ * on Raycast's rgb(58,58,59) detail pane rendered as near-invisible dark boxes.
+ * Measured from a real capture — the fill read rgb(54,54,54), exactly black-at-0.07
+ * over that ground, which is how the light variant was identified as the culprit.
+ *
+ * Width and height are pinned to the SVG's intrinsic size so the pane never stretches
+ * it.
  */
 export function diagramMarkdown(name: string | undefined, alt = ""): string {
   if (!name) return "";
   const size = sizes[name];
   const query = size ? `?raycast-width=${size[0]}&raycast-height=${size[1]}` : "";
-  return `![${alt}](diagrams/${name}.svg${query})`;
+  const variant = isDark() ? `${name}@dark` : name;
+  return `![${alt}](diagrams/${variant}.svg${query})`;
+}
+
+/** Falls back to dark, which is what the large majority of Raycast users run. */
+function isDark(): boolean {
+  try {
+    return environment.appearance !== "light";
+  } catch {
+    return true;
+  }
 }
 
 function keyLine(row: Row): string {
