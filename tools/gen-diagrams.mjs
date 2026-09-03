@@ -259,5 +259,11 @@ const SIZE = Object.fromEntries(Object.entries(DIAG).map(([k, s]) => [k, s.match
 // so Raycast never scales them. Emitted for the extension to import.
 // Sizes live in src/ so the extension can import them directly; assets/ is for
 // files Raycast bundles, and a stray .json there would just be dead weight.
-writeFileSync(join(HERE, '..', 'src', 'lib', 'diagram-sizes.json'), JSON.stringify(SIZE, null, 2), 'utf8');
+// Written in Prettier's own shape (each pair on one line). JSON.stringify's default
+// expansion disagrees with it, so `ray lint --fix` and this generator would otherwise
+// rewrite the file against each other on every run.
+const sizesJson = `{\n${Object.entries(SIZE)
+  .map(([k, [w, h]]) => `  ${JSON.stringify(k)}: [${w}, ${h}]`)
+  .join(',\n')}\n}\n`;
+writeFileSync(join(HERE, '..', 'src', 'lib', 'diagram-sizes.json'), sizesJson, 'utf8');
 console.log(`wrote ${Object.keys(DIAGS.light).length * 2} SVGs to assets/diagrams/ + src/lib/diagram-sizes.json`);
