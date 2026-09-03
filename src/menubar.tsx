@@ -46,7 +46,9 @@ export default function Command() {
         <MenuBarExtra.Item
           title="Open Cheatsheet"
           icon={Icon.Book}
-          onAction={() => open("raycast://extensions/nathenmcvittie/aerospace-cheatsheet/cheatsheet")}
+          // Deep links are raycast://extensions/<author>/<extension>/<command>, so this
+          // has to track the author handle in package.json.
+          onAction={() => open("raycast://extensions/nmcv/aerospace-cheatsheet/cheatsheet")}
         />
       </MenuBarExtra.Section>
     </MenuBarExtra>
