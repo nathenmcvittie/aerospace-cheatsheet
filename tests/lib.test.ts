@@ -7,6 +7,7 @@ import { RECIPES, resolveRecipe } from "../src/lib/recipes";
 import { rowMarkdown } from "../src/lib/detail";
 import { tokenise } from "../src/lib/config";
 import { isServerDisabled } from "../src/serverState";
+import { toPlacement } from "../src/lib/workspaces";
 import type { Binding } from "../src/lib/config";
 
 const THIN = " ";
@@ -331,6 +332,35 @@ describe("server state detection", () => {
     assert.equal(isServerDisabled(new Error("No AeroSpace config found")), false);
     assert.equal(isServerDisabled(undefined), false);
     assert.equal(isServerDisabled(null), false);
+  });
+});
+
+describe("values crossing the cached-promise boundary", () => {
+  // useCachedPromise persists its result as JSON. A Map does not survive that: it
+  // comes back as {} with no .get, so the command worked on its first run against
+  // live data and threw on every cached run afterwards.
+  it("returns workspace placement as a plain JSON-safe object", () => {
+    const placement = toPlacement([
+      ["1", 1],
+      ["10", 2],
+    ]);
+    assert.equal(Object.getPrototypeOf(placement), Object.prototype, "not a plain object");
+    assert.deepEqual(placement, { "1": 1, "10": 2 });
+  });
+
+  it("survives a JSON round trip unchanged", () => {
+    const placement = toPlacement([
+      ["1", 1],
+      ["10", 2],
+    ]);
+    const revived = JSON.parse(JSON.stringify(placement));
+    assert.deepEqual(revived, placement, "the cached copy differs from the live one");
+    assert.equal(revived["10"], 2, "lookup broke after serialization");
+  });
+
+  it("would have caught a Map", () => {
+    const asMap = new Map([["10", 2]]);
+    assert.notDeepEqual(JSON.parse(JSON.stringify(asMap)), Object.fromEntries(asMap));
   });
 });
 

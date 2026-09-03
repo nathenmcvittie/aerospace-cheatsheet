@@ -90,16 +90,31 @@ export async function focusedMonitor(): Promise<Monitor | undefined> {
   return first ? { id: first["monitor-id"], name: first["monitor-name"] } : undefined;
 }
 
-/** Which monitor each workspace currently sits on, keyed by workspace name. */
-export async function workspaceMonitors(): Promise<Map<string, number>> {
+/**
+ * Which monitor each workspace sits on, keyed by workspace name.
+ *
+ * A plain object, NOT a Map. This value is returned through `useCachedPromise`, which
+ * persists its result as JSON, and a Map does not survive that round trip: it comes
+ * back as `{}` with no `.get`. The result was a command that worked on its first run
+ * against live data and threw "placement.get is not a function" on every cached run
+ * afterwards.
+ */
+export type WorkspacePlacement = Record<string, number>;
+
+/** Pure half, so the JSON-safety of the shape can be tested without the CLI. */
+export function toPlacement(pairs: [string, number][]): WorkspacePlacement {
+  return Object.fromEntries(pairs);
+}
+
+export async function workspaceMonitors(): Promise<WorkspacePlacement> {
   const monitors = await listMonitors();
   const pairs = await Promise.all(
     monitors.map(async (m) => {
       const raw = await aerospace("list-workspaces", "--monitor", String(m.id), "--json").catch(() => "[]");
-      return (JSON.parse(raw) as { workspace: string }[]).map((w) => [w.workspace, m.id] as const);
+      return (JSON.parse(raw) as { workspace: string }[]).map((w) => [w.workspace, m.id] as [string, number]);
     }),
   );
-  return new Map(pairs.flat());
+  return toPlacement(pairs.flat());
 }
 
 export async function moveWorkspaceToMonitor(workspace: string, monitorId: number): Promise<void> {

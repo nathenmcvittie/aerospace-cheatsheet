@@ -76,7 +76,18 @@ dotfiles repo, and which controls whether the user's windows work.
   array values. Asserting "the file still parses" is not enough; assert that exactly
   one line changed and that its trailing comment survived.
 
-## Rule 4 — verify UI against a real capture, not a mock
+## Rule 4 — anything returned from useCachedPromise must survive JSON
+
+The hook persists its result as JSON, so a `Map`, `Set`, `Date` or class instance comes
+back as something else on a cache hit. `workspaceMonitors()` returned a `Map`, which
+deserialized to `{}` with no `.get`. The command therefore worked on its first run
+against live data and threw `placement.get is not a function` on every run afterwards,
+which is exactly the shape of bug a first-load screenshot cannot catch.
+
+Return plain objects and arrays. Where the shape is built by a helper, keep that helper
+pure so a test can assert `JSON.parse(JSON.stringify(x))` round-trips unchanged.
+
+## Rule 5 — verify UI against a real capture, not a mock
 
 Two bugs shipped past a build, a type-check, 61 tests and a lint run, and both were
 obvious the first time the extension was photographed running:
@@ -106,7 +117,7 @@ rm -rf ~/Library/Caches/com.raycast.macos/fsCachedData
 open -a Raycast
 ```
 
-## Rule 5 — check the CLI's real output, not its documentation
+## Rule 6 — check the CLI's real output, not its documentation
 
 `aerospace list-windows --all --json` does **not** include the workspace unless
 `--format` asks for it. That silently broke four commands, and nothing in the types or

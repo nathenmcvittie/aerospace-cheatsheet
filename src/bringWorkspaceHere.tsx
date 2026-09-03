@@ -32,7 +32,7 @@ export default function Command() {
   const here = data?.here;
 
   const elsewhere = (data?.workspaces ?? []).filter(
-    (w) => here && data?.placement.get(w.name) !== undefined && data.placement.get(w.name) !== here.id,
+    (w) => here && data?.placement[w.name] !== undefined && data.placement[w.name] !== here.id,
   );
 
   return (
@@ -58,7 +58,7 @@ export default function Command() {
       {!singleMonitor &&
         elsewhere.map((w) => {
           const apps = [...new Set((data?.windows ?? []).filter((x) => x.workspace === w.name).map((x) => x.appName))];
-          const onMonitor = data?.monitors.find((m) => m.id === data?.placement.get(w.name));
+          const onMonitor = data?.monitors.find((m) => m.id === data?.placement[w.name]);
           return (
             <List.Item
               key={w.name}
