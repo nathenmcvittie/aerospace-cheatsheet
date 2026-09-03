@@ -211,6 +211,41 @@ describe("rows — merge rules", () => {
     assert.notEqual(rows[0].title, "join-with left; mode main", "the mode switch was not stripped before lookup");
   });
 
+  it("only claims a range when the series is actually contiguous", () => {
+    const gappy = buildRows(bind("main", Object.fromEntries([1, 3, 7].map((n) => [`alt-${n}`, `workspace ${n}`]))));
+    assert.equal(gappy.length, 1);
+    assert.ok(!/1–7/.test(gappy[0].title), `claimed a range it does not have: ${gappy[0].title}`);
+    assert.match(gappy[0].title, /1, 3, 7/);
+    assert.ok(!/–/.test(gappy[0].keys[0].display), `key chip claims a range: ${gappy[0].keys[0].display}`);
+
+    const solid = buildRows(bind("main", Object.fromEntries([1, 2, 3].map((n) => [`alt-${n}`, `workspace ${n}`]))));
+    assert.match(solid[0].title, /1–3/, "a contiguous run should still fold to a range");
+  });
+
+  it("truncates a long gappy series with a count instead of a false range", () => {
+    const odds = [1, 3, 5, 7, 9, 11, 13];
+    const rows = buildRows(bind("main", Object.fromEntries(odds.map((n) => [`alt-w${n}`, `workspace ${n}`]))));
+    assert.equal(rows.flatMap((r) => r.bindings).length, odds.length);
+    assert.match(rows[0].title, /\+\d/, `expected a truncated count, got: ${rows[0].title}`);
+    assert.ok(!/1–13/.test(rows[0].title));
+  });
+
+  it("merges cluster members that share a label into one row, keeping every key", () => {
+    // Both spellings of prev, and both of next: four bindings, one honest row.
+    const rows = buildRows(
+      bind("main", {
+        "alt-p": "move-node-to-monitor prev",
+        "alt-n": "move-node-to-monitor next",
+        "alt-shift-p": "move-node-to-monitor --wrap-around prev",
+        "alt-shift-n": "move-node-to-monitor --wrap-around next",
+      }),
+    );
+    assert.equal(rows.flatMap((r) => r.bindings).length, 4, "a binding was dropped");
+    assert.equal(rows.length, 1, "same-label members should not appear as duplicate rows");
+    assert.equal(rows[0].keys.length, 4);
+    assert.equal(new Set(rows.map((r) => r.title)).size, rows.length, "duplicate row titles");
+  });
+
   it("puts an unknown command in Other rather than dropping it", () => {
     const rows = buildRows(bind("main", { "alt-z": "some-future-command --flag" }));
     assert.equal(rows.length, 1);
