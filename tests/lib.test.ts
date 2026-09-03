@@ -5,6 +5,7 @@ import { buildRows, type Row } from "../src/lib/rows";
 import { lookup, normalise } from "../src/lib/dictionary";
 import { RECIPES, resolveRecipe } from "../src/lib/recipes";
 import { rowMarkdown } from "../src/lib/detail";
+import { tokenise } from "../src/lib/config";
 import type { Binding } from "../src/lib/config";
 
 const THIN = " ";
@@ -246,6 +247,22 @@ describe("rows — merge rules", () => {
     assert.equal(new Set(rows.map((r) => r.title)).size, rows.length, "duplicate row titles");
   });
 
+  it("recognises every direction move-node-to-monitor accepts", () => {
+    const rows = buildRows(
+      bind("main", {
+        "alt-1": "move-node-to-monitor left",
+        "alt-2": "move-node-to-monitor right",
+        "alt-3": "move-node-to-monitor up",
+        "alt-4": "move-node-to-monitor down",
+      }),
+    );
+    assert.equal(rows.flatMap((r) => r.bindings).length, 4);
+    for (const r of rows) {
+      assert.notEqual(r.group, "other", `directional monitor move fell through: ${r.title}`);
+      assert.ok(!/move-node-to-monitor/.test(r.title), `raw command shown as title: ${r.title}`);
+    }
+  });
+
   it("puts an unknown command in Other rather than dropping it", () => {
     const rows = buildRows(bind("main", { "alt-z": "some-future-command --flag" }));
     assert.equal(rows.length, 1);
@@ -270,6 +287,32 @@ describe("rows — merge rules", () => {
     const elapsed = Date.now() - started;
     assert.equal(rows.flatMap((r) => r.bindings).length, 2000);
     assert.ok(elapsed < 3000, `buildRows took ${elapsed}ms on 2000 bindings`);
+  });
+});
+
+describe("command tokenising", () => {
+  it("splits a plain command on whitespace", () => {
+    assert.deepEqual(tokenise("layout --root h_tiles"), ["layout", "--root", "h_tiles"]);
+    assert.deepEqual(tokenise("  focus   left  "), ["focus", "left"]);
+  });
+
+  it("keeps a quoted argument together", () => {
+    // Workspace names may contain spaces; a plain split produced four broken args.
+    assert.deepEqual(tokenise('move-node-to-workspace -- "Design Work"'), [
+      "move-node-to-workspace",
+      "--",
+      "Design Work",
+    ]);
+    assert.deepEqual(tokenise("workspace 'my space'"), ["workspace", "my space"]);
+  });
+
+  it("preserves a deliberately empty quoted argument", () => {
+    assert.deepEqual(tokenise('cmd "" x'), ["cmd", "", "x"]);
+  });
+
+  it("returns nothing for an empty or whitespace-only command", () => {
+    assert.deepEqual(tokenise(""), []);
+    assert.deepEqual(tokenise("   "), []);
   });
 });
 

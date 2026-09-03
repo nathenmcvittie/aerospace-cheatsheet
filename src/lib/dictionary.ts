@@ -156,6 +156,17 @@ export const ENTRIES: Entry[] = [
     keywords: ["swap", "push", "reorder", "into stack"],
   },
   {
+    // The CLI accepts directions here as well as prev/next. Without this they fell
+    // through to "Other" as a raw command, inconsistent with focus and move which
+    // both have full directional entries.
+    test: new RegExp(`^move-node-to-monitor (?:--wrap-around )?${DIRECTION}$`),
+    group: "move",
+    icon: Icon.Window,
+    label: "Send to $1 monitor",
+    blurb: "Moves the focused window to the display $1 of this one.",
+    keywords: ["display", "screen", "monitor"],
+  },
+  {
     test: /^move-node-to-monitor (?:--wrap-around )?(prev|next)$/,
     group: "move",
     icon: Icon.Window,

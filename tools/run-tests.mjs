@@ -15,7 +15,16 @@ const OUT = join(ROOT, '.test-build');
 
 mkdirSync(OUT, { recursive: true });
 const stub = join(OUT, 'stub-raycast.js');
-writeFileSync(stub, `const h={get:(_t,p)=>String(p)};export const Color=new Proxy({},h);export const Icon=new Proxy({},h);\n`);
+// getPreferenceValues throws outside a Raycast command context, which is exactly the
+// condition config.ts guards against, so the stub reproduces that rather than faking
+// a value the tests would never see in the real runtime.
+writeFileSync(stub, [
+  `const h={get:(_t,p)=>String(p)};`,
+  `export const Color=new Proxy({},h);`,
+  `export const Icon=new Proxy({},h);`,
+  `export function getPreferenceValues(){throw new Error("no preferences outside Raycast");}`,
+  ``,
+].join('\n'));
 
 const bundle = join(OUT, 'lib.test.mjs');
 await build({

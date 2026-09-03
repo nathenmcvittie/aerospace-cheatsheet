@@ -130,7 +130,13 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
   const bindings: Binding[] = [];
   for (const [mode, modeConfig] of Object.entries(parsed.mode ?? {})) {
     for (const [key, value] of Object.entries(modeConfig.binding ?? {})) {
-      const commands = (Array.isArray(value) ? value : [value]).filter(Boolean);
+      // A typo'd config can hold a bare number or boolean (`alt-1 = 123`). Those are
+      // not commands, but throwing a raw TypeError deep in normalise() told the user
+      // nothing. Coerce instead: the value still shows up under "Other", exactly as
+      // written, which is a far better prompt to go fix the line.
+      const commands = (Array.isArray(value) ? value : [value])
+        .filter((c) => c !== null && c !== undefined && c !== "")
+        .map((c) => (typeof c === "string" ? c : String(c)));
       if (commands.length === 0) continue;
       bindings.push({ mode, key, command: commands.join("; "), commands });
     }
@@ -146,13 +152,50 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
  * the bare command would work but would leave the user's understanding of the mode
  * out of sync with what they just saw happen.
  */
+/**
+ * Splits a command into arguments, respecting quotes.
+ *
+ * A plain whitespace split breaks any command carrying a quoted argument, and
+ * workspace names are allowed to contain spaces: `move-node-to-workspace -- "Design
+ * Work"` became four broken arguments and the call failed. Quotes are honoured and
+ * stripped, the way a shell would, without involving a shell.
+ */
+export function tokenise(command: string): string[] {
+  const args: string[] = [];
+  let current = "";
+  let quote: '"' | "'" | null = null;
+  let started = false;
+
+  for (const char of command.trim()) {
+    if (quote) {
+      if (char === quote) quote = null;
+      else current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      started = true;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      if (started || current) args.push(current);
+      current = "";
+      started = false;
+      continue;
+    }
+    current += char;
+  }
+  if (started || current) args.push(current);
+  return args;
+}
+
 export async function runBinding(binding: Binding): Promise<void> {
   const bin = await aerospaceBinary();
   const failures: string[] = [];
   let attempted = 0;
 
   for (const command of binding.commands) {
-    const args = command.trim().split(/\s+/).filter(Boolean);
+    const args = tokenise(command);
     if (args.length === 0) continue;
     // Running a shell line on the user's behalf is not this command's business.
     if (args[0] === "exec-and-forget") continue;
