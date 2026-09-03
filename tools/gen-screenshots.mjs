@@ -196,6 +196,16 @@ body{display:flex;align-items:center;justify-content:center;
 pre{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;line-height:1.6;
   background:rgba(255,255,255,.04);border-radius:8px;padding:12px;color:#c7c7cc;
   white-space:pre-wrap}
+.form{flex:1;padding:20px 0;overflow:hidden}
+.frow{display:flex;align-items:flex-start;padding:9px 22px;gap:18px}
+.flabel{width:118px;flex:0 0 118px;text-align:right;font-size:13px;color:#8e8e93;padding-top:7px}
+.fctl{flex:1}
+.finput{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);
+  border-radius:7px;padding:7px 11px;font-size:13px;color:#fff;min-height:33px}
+.finput.ph{color:#5a5a5f}
+.fhint{font-size:11.5px;color:#6e6e73;margin-top:6px;line-height:1.45}
+.fstatic{font-size:13px;color:#e5e5ea;padding-top:7px}
+.fsep{height:1px;background:rgba(255,255,255,.07);margin:13px 22px}
 .c-com{color:#6e6e73}.c-sec{color:#ff9f0a}.c-key{color:#64d2ff}
 .c-str{color:#a3e07a}.c-num{color:#d0a0ff}
 `;
@@ -450,6 +460,31 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
         fullWidth: true,
         primaryAction: "Go to Workspace",
       }),
+    },
+    {
+      name: "aerospace-cheatsheet-7",
+      html: `<div class="win">
+        <div class="search">${SEARCH_ICON}<div class="ph">Edit ⌃ ⌥ ⌘ L</div></div>
+        <div class="body"><div class="form">
+          <div class="frow"><div class="flabel">Mode</div><div class="fctl"><div class="fstatic">main</div></div></div>
+          <div class="frow"><div class="flabel">Key</div><div class="fctl">
+            <div class="finput">ctrl-alt-cmd-l</div>
+            <div class="fhint">Written the way AeroSpace writes it: modifiers and the key joined by hyphens.</div>
+          </div></div>
+          <div class="frow"><div class="flabel">Reads as</div><div class="fctl"><div class="fstatic">⌃ ⌥ ⌘ L</div></div></div>
+          <div class="frow"><div class="flabel">Command</div><div class="fctl">
+            <div class="finput">join-with right</div>
+            <div class="fhint">An AeroSpace command. Separate a sequence with a semicolon; it is saved as a toml array.</div>
+          </div></div>
+          <div class="frow"><div class="flabel">Recognised as</div><div class="fctl">
+            <div class="fstatic">Join with the window to its right</div></div></div>
+          <div class="fsep"></div>
+          <div class="frow"><div class="flabel">Before saving</div><div class="fctl">
+            <div class="fhint" style="margin-top:7px">The change is re-parsed, then applied and checked with
+            reload-config. If AeroSpace rejects it your config is put back exactly as it was.</div></div></div>
+        </div></div>
+        <div class="bar"><b>Save Binding</b><span class="kbd">↵</span>
+          <b style="margin-left:8px">Actions</b><span class="kbd">⌘K</span></div></div>`,
     },
     {
       name: "aerospace-cheatsheet-6",

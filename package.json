@@ -2,7 +2,7 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "aerospace-cheatsheet",
   "title": "AeroSpace Cheatsheet",
-  "description": "Look up, learn, and run your AeroSpace keybindings. Reads your own config, so every key it shows is one you actually have.",
+  "description": "Look up, learn, run, and edit your AeroSpace keybindings. Reads your own config, so every key it shows is one you actually have.",
   "icon": "icon.png",
   "author": "nmcv",
   "categories": [
@@ -15,7 +15,7 @@
       "name": "cheatsheet",
       "title": "AeroSpace Cheatsheet",
       "subtitle": "AeroSpace",
-      "description": "Your bindings, grouped and named, with layout diagrams and recipes",
+      "description": "Your bindings, grouped and named, with layout diagrams, recipes, and in-place editing",
       "mode": "view"
     },
     {

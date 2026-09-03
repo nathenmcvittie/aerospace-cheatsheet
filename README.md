@@ -4,7 +4,7 @@
 
 # AeroSpace Cheatsheet
 
-**Look up, learn, and run your [AeroSpace](https://nikitabobko.github.io/AeroSpace/) keybindings, from Raycast.**
+**Look up, learn, run, and edit your [AeroSpace](https://nikitabobko.github.io/AeroSpace/) keybindings, from Raycast.**
 
 [![test](https://github.com/nathenmcvittie/aerospace-cheatsheet/actions/workflows/test.yml/badge.svg)](https://github.com/nathenmcvittie/aerospace-cheatsheet/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
@@ -23,7 +23,7 @@ your own bindings.
 
 | Command | What it does |
 |---|---|
-| AeroSpace Cheatsheet | Your bindings, grouped and named, with diagrams and recipes |
+| AeroSpace Cheatsheet | Your bindings, grouped and named, with diagrams, recipes, and in-place editing |
 | Go to Workspace | Switch workspace, showing which apps are on each |
 | Switch Windows | Every window grouped by workspace: focus it, pull it here, tile or float it |
 | Move Window to Workspace | Send the focused window somewhere, creating the workspace if the name is new |
@@ -82,6 +82,10 @@ binding's key and command; `⌘N` adds a new one. Saving rewrites the single lin
 `aerospace.toml` and leaves every other byte alone, comments and column alignment
 included. The change is re-parsed, then applied with `reload-config`, and if AeroSpace
 rejects it your config is restored exactly as it was.
+
+<div align="center">
+<img src="metadata/aerospace-cheatsheet-7.png" width="760" alt="The edit form, showing the key and command fields with the glyphs they render as">
+</div>
 
 ## Working from your config
 
