@@ -36,11 +36,7 @@ export default function Command() {
   }
 
   return (
-    <List
-      isLoading={isLoading}
-      onSearchTextChange={setQuery}
-      searchBarPlaceholder="Move the focused window to…"
-    >
+    <List isLoading={isLoading} onSearchTextChange={setQuery} searchBarPlaceholder="Move the focused window to…">
       {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
 
       {isNew && (

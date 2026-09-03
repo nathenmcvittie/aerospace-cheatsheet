@@ -98,7 +98,7 @@ npm run diagrams   # regenerate assets/diagrams
 npm run icon       # regenerate assets/icon.png
 npm run screenshots # regenerate metadata/ store screenshots
 npm run test       # unit and edge-case suite
-npm run lint
+npm run lint       # package validation, ESLint, Prettier
 ```
 
 Tests cover the pure logic in `src/lib`: key parsing, the three merge rules, recipe

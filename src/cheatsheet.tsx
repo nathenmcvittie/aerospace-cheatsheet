@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Color, Icon, List, showToast, Toast, useNavigation } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, Keyboard, List, showToast, Toast, useNavigation } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useState } from "react";
 import { loadBindings, runBinding } from "./lib/config";
@@ -91,11 +91,7 @@ function RecipeItem({ recipe }: { recipe: ResolvedRecipe }) {
       detail={<List.Item.Detail markdown={recipeMarkdown(recipe)} />}
       actions={
         <ActionPanel>
-          <Action
-            title="Open Walkthrough"
-            icon={Icon.Book}
-            onAction={() => push(<Walkthrough recipe={recipe} />)}
-          />
+          <Action title="Open Walkthrough" icon={Icon.Book} onAction={() => push(<Walkthrough recipe={recipe} />)} />
         </ActionPanel>
       }
     />
@@ -162,7 +158,7 @@ function RowItem({ row, tint, configPath }: { row: Row; tint: Color; configPath?
             <Action.CopyToClipboard
               title="Copy Command"
               content={row.command}
-              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+              shortcut={Keyboard.Shortcut.Common.Copy}
             />
           </ActionPanel.Section>
           {configPath && (

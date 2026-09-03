@@ -12,16 +12,7 @@ import { Color, Icon } from "@raycast/api";
  * showing their raw command string, so the sheet is never quietly incomplete.
  */
 
-export type GroupId =
-  | "recipes"
-  | "focus"
-  | "move"
-  | "build"
-  | "resize"
-  | "layout"
-  | "workspaces"
-  | "service"
-  | "other";
+export type GroupId = "recipes" | "focus" | "move" | "build" | "resize" | "layout" | "workspaces" | "service" | "other";
 
 export interface Group {
   id: GroupId;
@@ -128,7 +119,8 @@ export const ENTRIES: Entry[] = [
     icon: Icon.Trash,
     label: "Flatten all nesting",
     blurb: "Collapses every container so all windows become direct children of the root again.",
-    teaches: "Quicker than unpicking a layout by hand. When the arrangement gets away from you, flatten it and build again.",
+    teaches:
+      "Quicker than unpicking a layout by hand. When the arrangement gets away from you, flatten it and build again.",
     diagram: "flatten",
     keywords: ["reset", "collapse", "start over", "unnest"],
   },
@@ -180,7 +172,8 @@ export const ENTRIES: Entry[] = [
     icon: Icon.ArrowsExpand,
     label: "Resize along parent axis $1",
     blurb: "Grows or shrinks the window along whichever axis its parent container uses.",
-    teaches: "Once windows are nested, which axis this affects is hard to predict. The explicit width and height bindings are the safer reach.",
+    teaches:
+      "Once windows are nested, which axis this affects is hard to predict. The explicit width and height bindings are the safer reach.",
     keywords: ["smart", "grow", "shrink"],
     collapse: "pair",
   },

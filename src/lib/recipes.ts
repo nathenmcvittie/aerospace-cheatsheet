@@ -59,8 +59,14 @@ export const RECIPES: Recipe[] = [
     diagram: "recipe-2x2",
     steps: [
       { command: "layout --root h_tiles", instruction: "With four windows open, lay the workspace out in columns." },
-      { command: "join-with right", instruction: "Focus the first window and join right. Windows 1 and 2 become a stack." },
-      { command: "join-with right", instruction: "Focus the third window and join right. Windows 3 and 4 become the second stack." },
+      {
+        command: "join-with right",
+        instruction: "Focus the first window and join right. Windows 1 and 2 become a stack.",
+      },
+      {
+        command: "join-with right",
+        instruction: "Focus the third window and join right. Windows 3 and 4 become the second stack.",
+      },
     ],
     keywords: ["grid", "quad", "four", "2x2"],
   },

@@ -160,7 +160,7 @@ export async function runBinding(binding: Binding): Promise<void> {
     try {
       await exec(bin, args);
     } catch (e) {
-      failures.push(e instanceof Error ? e.message.trim().split("\n").pop() ?? command : String(e));
+      failures.push(e instanceof Error ? (e.message.trim().split("\n").pop() ?? command) : String(e));
     }
   }
 

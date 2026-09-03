@@ -18,7 +18,13 @@ export default function Command() {
         {(data?.workspaces ?? [])
           .filter((w) => !w.isEmpty)
           .map((w) => (
-            <WorkspaceItem key={w.name} name={w.name} focused={w.isFocused} apps={windowsFor(w.name)} onDone={revalidate} />
+            <WorkspaceItem
+              key={w.name}
+              name={w.name}
+              focused={w.isFocused}
+              apps={windowsFor(w.name)}
+              onDone={revalidate}
+            />
           ))}
       </List.Section>
 
@@ -49,7 +55,10 @@ function WorkspaceItem({
   const names = [...new Set(apps.map((a) => a.appName))];
   return (
     <List.Item
-      icon={{ source: focused ? Icon.CircleFilled : Icon.Circle, tintColor: focused ? Color.Green : Color.SecondaryText }}
+      icon={{
+        source: focused ? Icon.CircleFilled : Icon.Circle,
+        tintColor: focused ? Color.Green : Color.SecondaryText,
+      }}
       title={name}
       subtitle={names.join(", ")}
       accessories={apps.length > 0 ? [{ text: `${apps.length}` }] : []}

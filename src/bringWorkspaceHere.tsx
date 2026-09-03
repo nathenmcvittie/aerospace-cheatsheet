@@ -56,9 +56,7 @@ export default function Command() {
 
       {!singleMonitor &&
         elsewhere.map((w) => {
-          const apps = [
-            ...new Set((data?.windows ?? []).filter((x) => x.workspace === w.name).map((x) => x.appName)),
-          ];
+          const apps = [...new Set((data?.windows ?? []).filter((x) => x.workspace === w.name).map((x) => x.appName))];
           const onMonitor = data?.monitors.find((m) => m.id === data?.placement.get(w.name));
           return (
             <List.Item

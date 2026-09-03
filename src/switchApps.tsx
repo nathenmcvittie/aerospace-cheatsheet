@@ -24,9 +24,7 @@ export default function Command() {
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Focus a window…">
       {error && <List.EmptyView icon={Icon.Warning} title="AeroSpace isn't reachable" description={error.message} />}
-      {!isLoading && !error && windows.length === 0 && (
-        <List.EmptyView icon={Icon.AppWindow} title="No open windows" />
-      )}
+      {!isLoading && !error && windows.length === 0 && <List.EmptyView icon={Icon.AppWindow} title="No open windows" />}
 
       {order.map((workspace) => (
         <List.Section
@@ -57,7 +55,9 @@ export default function Command() {
                       <Action
                         title="Pull to Current Workspace"
                         icon={Icon.ArrowDownCircle}
-                        shortcut={{ modifiers: ["cmd"], key: "p" }}
+                        // Not cmd-P: Raycast reserves that for the search bar dropdown
+                        // and silently ignores an extension that claims it.
+                        shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
                         onAction={() =>
                           run(async () => {
                             if (!data?.focused) throw new Error("No focused workspace to pull into.");
