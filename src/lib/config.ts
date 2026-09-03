@@ -131,7 +131,7 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
   for (const [mode, modeConfig] of Object.entries(parsed.mode ?? {})) {
     for (const [key, value] of Object.entries(modeConfig.binding ?? {})) {
       // A typo'd config can hold a bare number or boolean (`alt-1 = 123`). Those are
-      // not commands, but throwing a raw TypeError deep in normalise() told the user
+      // not commands, but throwing a raw TypeError deep in normalize() told the user
       // nothing. Coerce instead: the value still shows up under "Other", exactly as
       // written, which is a far better prompt to go fix the line.
       const commands = (Array.isArray(value) ? value : [value])

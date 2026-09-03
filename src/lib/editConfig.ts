@@ -4,7 +4,7 @@ import { parse } from "smol-toml";
  * Surgical edits to aerospace.toml.
  *
  * These work on the raw text, one line at a time, and never round-trip through a TOML
- * parser. Parsing and re-serialising would produce a valid file that threw away every
+ * parser. Parsing and re-serializing would produce a valid file that threw away every
  * comment, every blank line and every hand-aligned `=` column — for a config people
  * write by hand and annotate heavily, that is a destructive "fix". So the rules here
  * are deliberately narrow: locate the one line, change the one thing, leave every

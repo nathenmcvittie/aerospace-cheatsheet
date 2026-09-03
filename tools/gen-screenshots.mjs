@@ -497,7 +497,7 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
             <div class="finput">join-with right</div>
             <div class="fhint">An AeroSpace command. Separate a sequence with a semicolon; it is saved as a toml array.</div>
           </div></div>
-          <div class="frow"><div class="flabel">Recognised as</div><div class="fctl">
+          <div class="frow"><div class="flabel">Recognized as</div><div class="fctl">
             <div class="fstatic">Join with the window to its right</div></div></div>
           <div class="fsep"></div>
           <div class="frow"><div class="flabel">Before saving</div><div class="fctl">

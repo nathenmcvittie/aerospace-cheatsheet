@@ -144,7 +144,7 @@ export function EditBinding({ target, onSaved }: { target: EditTarget; onSaved?:
         info="An AeroSpace command. Separate a sequence with a semicolon; it is saved as a toml array."
       />
       {known && (
-        <Form.Description title="Recognised as" text={known.entry.label.replace(/\$1/, known.match[1] ?? "")} />
+        <Form.Description title="Recognized as" text={known.entry.label.replace(/\$1/, known.match[1] ?? "")} />
       )}
 
       <Form.Separator />

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { keyDisplay, keySearchTerms, parseKey } from "../src/lib/keys";
 import { buildRows, type Row } from "../src/lib/rows";
-import { lookup, normalise } from "../src/lib/dictionary";
+import { lookup, normalize } from "../src/lib/dictionary";
 import { RECIPES, resolveRecipe } from "../src/lib/recipes";
 import { rowMarkdown } from "../src/lib/detail";
 import { tokenise } from "../src/lib/config";
@@ -83,9 +83,9 @@ describe("keys", () => {
 });
 
 describe("dictionary", () => {
-  it("normalises whitespace before matching", () => {
+  it("normalizes whitespace before matching", () => {
     assert.ok(lookup("layout   --root  h_tiles"));
-    assert.equal(normalise("  focus   left  "), "focus left");
+    assert.equal(normalize("  focus   left  "), "focus left");
   });
 
   it("returns undefined for an unknown command rather than throwing", () => {
@@ -248,7 +248,7 @@ describe("rows — merge rules", () => {
     assert.equal(new Set(rows.map((r) => r.title)).size, rows.length, "duplicate row titles");
   });
 
-  it("recognises every direction move-node-to-monitor accepts", () => {
+  it("recognizes every direction move-node-to-monitor accepts", () => {
     const rows = buildRows(
       bind("main", {
         "alt-1": "move-node-to-monitor left",
@@ -318,7 +318,7 @@ describe("command tokenising", () => {
 });
 
 describe("server state detection", () => {
-  it("recognises AeroSpace's disabled-server message", () => {
+  it("recognizes AeroSpace's disabled-server message", () => {
     // Verified against the real CLI: this is the exact wording it returns.
     const real = new Error(
       "Command failed: aerospace list-workspaces\nAeroSpace server is disabled and doesn't accept commands. You can use 'aerospace enable on' to enable the server",

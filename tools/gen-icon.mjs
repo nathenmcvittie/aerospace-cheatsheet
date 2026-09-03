@@ -1,11 +1,11 @@
 // Generates assets/icon.png — the extension's Raycast icon.
 //
-// Rasterises and encodes the PNG here rather than shelling out to a converter. Every
-// SVG rasteriser on a stock macOS box (qlmanage, sips, Preview) composites onto an
+// Rasterizes and encodes the PNG here rather than shelling out to a converter. Every
+// SVG rasterizer on a stock macOS box (qlmanage, sips, Preview) composites onto an
 // opaque white background, which shipped an icon whose rounded corners were white
 // instead of transparent — white triangles against Raycast's dark UI. Doing it in
 // Node means correct alpha, and means anyone cloning the repo can regenerate the icon
-// without installing a rasteriser.
+// without installing a rasterizer.
 
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
@@ -119,7 +119,7 @@ const ihdr = Buffer.alloc(13);
 ihdr.writeUInt32BE(SIZE, 0);
 ihdr.writeUInt32BE(SIZE, 4);
 ihdr[8] = 8; // bit depth
-ihdr[9] = 6; // colour type: RGBA
+ihdr[9] = 6; // color type: RGBA
 ihdr[10] = 0; // deflate
 ihdr[11] = 0; // adaptive filtering
 ihdr[12] = 0; // no interlace

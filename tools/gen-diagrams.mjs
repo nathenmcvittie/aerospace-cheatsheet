@@ -41,7 +41,7 @@ const C = {
 };
 // Diagram palettes — one per theme. Raycast swaps `foo.svg` ↔ `foo@dark.svg` automatically,
 // so each palette is tuned for its own ground instead of compromising on a middle gray.
-// Colours are [hex, opacity] and are emitted as separate `fill`/`fill-opacity`
+// Colors are [hex, opacity] and are emitted as separate `fill`/`fill-opacity`
 // attributes. NOT as rgba().
 //
 // `fill="rgba(255,255,255,0.2)"` is CSS Color 4, which browsers accept in an SVG

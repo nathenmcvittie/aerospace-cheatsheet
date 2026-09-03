@@ -34,7 +34,7 @@ export const GROUPS: Group[] = [
 ];
 
 export interface Entry {
-  /** Matches the normalised command string. */
+  /** Matches the normalized command string. */
   test: RegExp;
   group: GroupId;
   icon: Icon;
@@ -50,7 +50,7 @@ export interface Entry {
   undo?: string;
   /**
    * Nicer wording for a capture group, keyed by the captured value. Without this,
-   * "Join with $1 neighbour" produces "Join with down neighbour".
+   * "Join with $1 neighbor" produces "Join with down neighbor".
    */
   phrases?: Record<string, string>;
   /** Shorter wording for the row title, where horizontal space is tight. */
@@ -67,7 +67,7 @@ export interface Entry {
 }
 
 /** Collapse whitespace so `layout   --root  h_tiles` matches `layout --root h_tiles`. */
-export function normalise(command: string): string {
+export function normalize(command: string): string {
   return command.trim().replace(/\s+/g, " ");
 }
 
@@ -91,7 +91,7 @@ export const ENTRIES: Entry[] = [
     },
     titlePhrases: { left: "left", right: "right", up: "above", down: "below" },
     teaches:
-      "The new container always runs on the opposite axis to the one it sits in. So inside a row of columns, joining a left or right neighbour gives you a column of stacked windows. That is how you get a strip down one side with a stack beside it.",
+      "The new container always runs on the opposite axis to the one it sits in. So inside a row of columns, joining a left or right neighbor gives you a column of stacked windows. That is how you get a strip down one side with a stack beside it.",
     diagram: "join-$1",
     undo: "Flatten all nesting",
     keywords: ["nest", "container", "split", "stack", "group"],
@@ -154,9 +154,9 @@ export const ENTRIES: Entry[] = [
     group: "move",
     icon: Icon.ArrowRight,
     label: "Move window $1",
-    blurb: "Moves the focused window $1, swapping with a plain neighbour.",
+    blurb: "Moves the focused window $1, swapping with a plain neighbor.",
     teaches:
-      "If the neighbour is a container rather than a plain window, the window moves into it instead of past it. That is how you add a third window to a stack that already exists.",
+      "If the neighbor is a container rather than a plain window, the window moves into it instead of past it. That is how you add a third window to a stack that already exists.",
     diagram: "move-$1",
     keywords: ["swap", "push", "reorder", "into stack"],
   },
@@ -311,9 +311,9 @@ export const ENTRIES: Entry[] = [
 ];
 
 export function lookup(command: string): { entry: Entry; match: RegExpMatchArray } | undefined {
-  const normalised = normalise(command);
+  const normalized = normalize(command);
   for (const entry of ENTRIES) {
-    const match = normalised.match(entry.test);
+    const match = normalized.match(entry.test);
     if (match) return { entry, match };
   }
   return undefined;

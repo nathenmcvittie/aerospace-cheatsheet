@@ -64,7 +64,7 @@ committing it to muscle memory.
 
 **Diagrams.** Rows that change the window layout show a small before-and-after picture
 of what happens on screen. Useful for the ones that are hard to hold in your head, like
-why joining a left or right neighbour produces a vertically stacked column.
+why joining a left or right neighbor produces a vertically stacked column.
 
 **Recipes.** Short walkthroughs for shapes you want on screen: a strip down one side
 with a stack beside it, a 2×2 grid, even columns, or a reset back to a clean workspace.
@@ -74,7 +74,7 @@ Each step names the key from your config.
 <img src="metadata/aerospace-cheatsheet-4.png" width="760" alt="A recipe walkthrough with a four-frame storyboard and numbered steps">
 </div>
 
-**Nothing gets hidden.** A binding the extension doesn't recognise still appears, under
+**Nothing gets hidden.** A binding the extension doesn't recognize still appears, under
 "Other", showing its raw command.
 
 **Edit without leaving Raycast.** `⌘E` on any row opens a two-field form for that
@@ -100,7 +100,7 @@ anything, the step says so instead of printing a key that does nothing.
 ### A note on editing
 
 Edits are made line by line on the raw text, never by parsing the file and writing it
-back out. A round-trip through a TOML serialiser produces a valid file that has thrown
+back out. A round-trip through a TOML serializer produces a valid file that has thrown
 away every comment, blank line and hand-aligned column, which for a config people write
 and annotate by hand is a destructive thing to do quietly.
 
@@ -166,6 +166,6 @@ has the toggle and reload commands.
 window to a workspace that does not exist yet, and summoning a workspace to the current
 display.
 
-## Licence
+## License
 
 MIT. See [LICENSE](LICENSE).

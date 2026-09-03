@@ -1,5 +1,5 @@
 import type { Binding } from "./config";
-import { normalise } from "./dictionary";
+import { normalize } from "./dictionary";
 import { keyDisplay } from "./keys";
 
 /**
@@ -43,7 +43,7 @@ export const RECIPES: Recipe[] = [
       { instruction: "Focus the window you want at the top of the stack." },
       {
         command: "join-with right",
-        instruction: "Join it with its right neighbour. The pair becomes a vertical stack in one column.",
+        instruction: "Join it with its right neighbor. The pair becomes a vertical stack in one column.",
       },
       {
         command: "move left",
@@ -115,7 +115,7 @@ export function resolveRecipe(recipe: Recipe, bindings: Binding[]): ResolvedReci
   const byCommand = new Map<string, Binding[]>();
   for (const binding of bindings) {
     for (const command of binding.commands) {
-      const key = normalise(command);
+      const key = normalize(command);
       const existing = byCommand.get(key);
       if (existing) existing.push(binding);
       else byCommand.set(key, [binding]);
@@ -125,7 +125,7 @@ export function resolveRecipe(recipe: Recipe, bindings: Binding[]): ResolvedReci
   const missing: string[] = [];
   const resolved = recipe.steps.map((step): ResolvedStep => {
     if (!step.command) return { ...step, unbound: false };
-    const candidates = byCommand.get(normalise(step.command));
+    const candidates = byCommand.get(normalize(step.command));
     if (!candidates || candidates.length === 0) {
       missing.push(step.command);
       return { ...step, unbound: true };

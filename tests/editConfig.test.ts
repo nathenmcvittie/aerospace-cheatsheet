@@ -140,7 +140,7 @@ describe("editConfig — add, remove, rebind", () => {
     const { raw } = removeBinding(CONFIG, "main", "ctrl-alt-c");
     assert.equal(raw.split("\n").length, CONFIG.split("\n").length - 1);
     assert.equal(findBindingLine(raw, "main", "ctrl-alt-c"), -1);
-    assert.notEqual(findBindingLine(raw, "main", "ctrl-alt-r"), -1, "removed a neighbour too");
+    assert.notEqual(findBindingLine(raw, "main", "ctrl-alt-r"), -1, "removed a neighbor too");
   });
 
   it("rebinds to a different key without touching the command", () => {
