@@ -37,9 +37,19 @@ export async function listWorkspaces(): Promise<Workspace[]> {
   }));
 }
 
+/**
+ * Fields to request explicitly.
+ *
+ * `list-windows --all --json` returns only app-name, window-id and window-title. It
+ * does NOT include the workspace unless asked for, so every caller that grouped or
+ * filtered by workspace was silently reading undefined. Naming the fields also pins
+ * the shape against future changes to the CLI's defaults.
+ */
+const WINDOW_FORMAT = "%{window-id}%{app-name}%{window-title}%{workspace}";
+
 export async function listWindows(workspace?: string): Promise<WindowInfo[]> {
   const args = workspace ? ["list-windows", "--workspace", workspace] : ["list-windows", "--all"];
-  const raw = await aerospace(...args, "--json");
+  const raw = await aerospace(...args, "--format", WINDOW_FORMAT, "--json");
   const parsed = JSON.parse(raw) as {
     "window-id": number;
     "app-name": string;

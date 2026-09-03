@@ -97,8 +97,14 @@ npm run build      # build and typecheck
 npm run diagrams   # regenerate assets/diagrams
 npm run icon       # regenerate assets/icon.png
 npm run screenshots # regenerate metadata/ store screenshots
+npm run test       # unit and edge-case suite
 npm run lint
 ```
+
+Tests cover the pure logic in `src/lib`: key parsing, the three merge rules, recipe
+resolution, and the invariants that matter most — no binding is ever lost, row ids stay
+unique, output is deterministic, and no interpolation placeholder or `undefined` can
+reach a string the user reads.
 
 Diagrams and the icon are both generated rather than drawn. To change the diagram
 palette, edit `PAL` in `tools/gen-diagrams.mjs` and re-run `npm run diagrams`; all 42

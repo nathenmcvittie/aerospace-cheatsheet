@@ -1,0 +1,37 @@
+// Bundles the test suite (aliasing @raycast/api, which the lib imports for enums only)
+// and runs it under node:test. Bundling rather than type-stripping keeps one code path
+// for tests, the screenshot generator, and the extension itself.
+import { build } from 'esbuild';
+import { execFile } from 'node:child_process';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
+const exec = promisify(execFile);
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, '..');
+const OUT = join(ROOT, '.test-build');
+
+mkdirSync(OUT, { recursive: true });
+const stub = join(OUT, 'stub-raycast.js');
+writeFileSync(stub, `const h={get:(_t,p)=>String(p)};export const Color=new Proxy({},h);export const Icon=new Proxy({},h);\n`);
+
+const bundle = join(OUT, 'lib.test.mjs');
+await build({
+  entryPoints: [join(ROOT, 'tests', 'lib.test.ts')],
+  bundle: true, format: 'esm', platform: 'node', outfile: bundle,
+  alias: { '@raycast/api': stub },
+  external: ['node:*'],
+  logLevel: 'error',
+});
+
+try {
+  const { stdout, stderr } = await exec(process.execPath, ['--test', bundle], { maxBuffer: 32 * 1024 * 1024 });
+  process.stdout.write(stdout); process.stderr.write(stderr);
+} catch (e) {
+  process.stdout.write(e.stdout ?? ''); process.stderr.write(e.stderr ?? '');
+  rmSync(OUT, { recursive: true, force: true });
+  process.exit(1);
+}
+rmSync(OUT, { recursive: true, force: true });

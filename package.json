@@ -116,6 +116,7 @@
     "lint": "ray lint",
     "fix-lint": "ray lint --fix",
     "icon": "node tools/gen-icon.mjs",
-    "screenshots": "node tools/gen-screenshots.mjs"
+    "screenshots": "node tools/gen-screenshots.mjs",
+    "test": "node tools/run-tests.mjs"
   }
 }

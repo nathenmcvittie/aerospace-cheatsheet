@@ -101,8 +101,12 @@ function glyphForKey(name: string): string {
   if (!name) return "";
   const mapped = KEY_GLYPH[name.toLowerCase()];
   if (mapped) return mapped;
-  // Single letters read better capitalised; digits and anything else pass through.
-  return name.length === 1 ? name.toUpperCase() : name;
+  if (name.length === 1) return name.toUpperCase();
+  // Function keys are written f1-f20 in the config but read as F1-F20 on a keyboard.
+  if (/^f\d{1,2}$/i.test(name)) return name.toUpperCase();
+  // Anything else AeroSpace spells in camelCase (keypadPlus, sectionSign) becomes
+  // spaced words rather than being printed as the raw identifier.
+  return name.replace(/([a-z])([A-Z0-9])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
 }
 
 /** Just the display string, for when the parts aren't needed. */

@@ -148,9 +148,26 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
  */
 export async function runBinding(binding: Binding): Promise<void> {
   const bin = await aerospaceBinary();
+  const failures: string[] = [];
+  let attempted = 0;
+
   for (const command of binding.commands) {
-    const args = command.trim().split(/\s+/);
-    if (args[0] === "exec-and-forget") continue; // shelling out from here isn't ours to do
-    await exec(bin, args).catch(() => undefined); // a no-op command shouldn't surface as a crash
+    const args = command.trim().split(/\s+/).filter(Boolean);
+    if (args.length === 0) continue;
+    // Running a shell line on the user's behalf is not this command's business.
+    if (args[0] === "exec-and-forget") continue;
+    attempted++;
+    try {
+      await exec(bin, args);
+    } catch (e) {
+      failures.push(e instanceof Error ? e.message.trim().split("\n").pop() ?? command : String(e));
+    }
   }
+
+  if (attempted === 0) {
+    throw new Error("Nothing to run: this binding only shells out, which the cheatsheet does not do for you.");
+  }
+  // Previously every failure was swallowed, so a binding that could not run looked
+  // identical to one that worked. Surface it instead.
+  if (failures.length === attempted) throw new Error(failures.join("; "));
 }
