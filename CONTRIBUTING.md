@@ -50,10 +50,14 @@ Two traps already hit here, both fixed, both worth not reintroducing:
 ## Rule 2 — before every commit
 
 ```sh
-npm run build && npm run test && npx ray lint
+npm run verify   # typecheck + test + lint
 ```
 
-All three, every time. `ray lint` in particular is easy to skip and has caught a real
+Run `npm run typecheck` and not just `npm run build`. `ray build` does not reliably
+run `tsc`, and two type errors reached CI on the first submission after every local
+build had reported success: an `Icon` member that does not exist, and a cast asserting
+a tuple over a JSON import that widens to `number[]`. Both reproduce instantly under
+`tsc --noEmit`. `ray lint` in particular is easy to skip and has caught a real
 bug (a shortcut colliding with a Raycast reserved chord, which Raycast silently ignores
 rather than reporting).
 

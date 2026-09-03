@@ -14,8 +14,10 @@ import type { ResolvedRecipe } from "./recipes";
  * diagrams are shared assets that have to stay true on anybody's keybindings.
  */
 
-type SizeMap = Record<string, [number, number]>;
-const sizes = SIZES as SizeMap;
+// A JSON import widens its arrays to number[], so this is the type the data actually
+// has. The generator always writes a width/height pair; the lookup below tolerates
+// anything else by falling back to an unsized image rather than asserting a tuple.
+const sizes: Record<string, number[]> = SIZES;
 
 /**
  * Picks the theme variant explicitly, rather than relying on the `@dark` filename.
@@ -32,7 +34,7 @@ const sizes = SIZES as SizeMap;
 export function diagramMarkdown(name: string | undefined, alt = ""): string {
   if (!name) return "";
   const size = sizes[name];
-  const query = size ? `?raycast-width=${size[0]}&raycast-height=${size[1]}` : "";
+  const query = size?.length === 2 ? `?raycast-width=${size[0]}&raycast-height=${size[1]}` : "";
   const variant = isDark() ? `${name}@dark` : name;
   return `![${alt}](diagrams/${variant}.svg${query})`;
 }

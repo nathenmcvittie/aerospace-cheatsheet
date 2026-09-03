@@ -132,7 +132,7 @@ export const ENTRIES: Entry[] = [
   {
     test: /^balance-sizes$/,
     group: "build",
-    icon: Icon.Equal,
+    icon: Icon.Weights,
     label: "Balance all splits",
     blurb: "Equalises every split in the workspace, on both axes at once.",
     diagram: "balance",

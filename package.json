@@ -120,6 +120,8 @@
     "fix-lint": "ray lint --fix",
     "icon": "node tools/gen-icon.mjs",
     "screenshots": "node tools/gen-screenshots.mjs",
-    "test": "node tools/run-tests.mjs"
+    "test": "node tools/run-tests.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm run test && ray lint"
   }
 }
