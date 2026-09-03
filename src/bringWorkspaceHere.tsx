@@ -31,8 +31,18 @@ export default function Command() {
   const singleMonitor = !isLoading && (data?.monitors.length ?? 0) < 2;
   const here = data?.here;
 
+  // Empty workspaces are deliberately excluded. There is nothing to summon, and
+  // because a monitor shows exactly one workspace at a time, bringing an empty one
+  // over hides whatever you were looking at: the windows appear to vanish, and
+  // AeroSpace auto-creates a replacement workspace on the display it left, so the
+  // numbering ratchets up on every use. Found by doing exactly that on a real setup.
   const elsewhere = (data?.workspaces ?? []).filter(
-    (w) => here && data?.placement[w.name] !== undefined && data.placement[w.name] !== here.id,
+    (w) => here && !w.isEmpty && data?.placement[w.name] !== undefined && data.placement[w.name] !== here.id,
+  );
+
+  /** Distinguishes "nothing is elsewhere" from "what is elsewhere is empty". */
+  const emptyElsewhere = (data?.workspaces ?? []).some(
+    (w) => here && w.isEmpty && data?.placement[w.name] !== undefined && data.placement[w.name] !== here.id,
   );
 
   return (
@@ -51,7 +61,11 @@ export default function Command() {
         <List.EmptyView
           icon={Icon.Check}
           title="Nothing to bring over"
-          description={`Every workspace is already on ${here?.name ?? "this display"}.`}
+          description={
+            emptyElsewhere
+              ? `The other display only has empty workspaces. Bringing one over would just hide what is on ${here?.name ?? "this display"}.`
+              : `Every workspace with windows on it is already on ${here?.name ?? "this display"}.`
+          }
         />
       )}
 

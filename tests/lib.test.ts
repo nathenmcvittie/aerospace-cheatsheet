@@ -364,6 +364,43 @@ describe("values crossing the cached-promise boundary", () => {
   });
 });
 
+describe("bring-workspace candidate filter", () => {
+  // Mirrors the filter in bringWorkspaceHere.tsx. A monitor shows one workspace at a
+  // time, so bringing an EMPTY one over hides whatever you were looking at and makes
+  // AeroSpace auto-create a replacement on the display it left. Observed on a real
+  // two-display setup: the only offered candidate was empty, and pressing it made the
+  // user's windows disappear.
+  type W = { name: string; isEmpty: boolean };
+  const candidates = (workspaces: W[], placement: Record<string, number>, hereId: number) =>
+    workspaces.filter(
+      (w) => !w.isEmpty && placement[w.name] !== undefined && placement[w.name] !== hereId,
+    );
+
+  it("never offers an empty workspace", () => {
+    const got = candidates([{ name: "10", isEmpty: true }], { "10": 2 }, 1);
+    assert.deepEqual(got, [], "an empty workspace was offered");
+  });
+
+  it("offers a populated workspace on another display", () => {
+    const got = candidates([{ name: "3", isEmpty: false }], { "3": 2 }, 1);
+    assert.equal(got.length, 1);
+  });
+
+  it("never offers a workspace already on this display", () => {
+    const got = candidates([{ name: "3", isEmpty: false }], { "3": 1 }, 1);
+    assert.deepEqual(got, []);
+  });
+
+  it("offers nothing when the other display holds only empties", () => {
+    const workspaces = [
+      { name: "1", isEmpty: false },
+      { name: "10", isEmpty: true },
+      { name: "11", isEmpty: true },
+    ];
+    assert.deepEqual(candidates(workspaces, { "1": 1, "10": 2, "11": 2 }, 1), []);
+  });
+});
+
 describe("recipes", () => {
   const full = bind("main", {
     "ctrl-alt-c": "layout --root h_tiles",
