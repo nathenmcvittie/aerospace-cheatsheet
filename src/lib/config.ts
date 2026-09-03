@@ -25,17 +25,19 @@ const CONFIG_CANDIDATES = [
   join(homedir(), ".config", "aerospace", "aerospace.toml"),
 ];
 
-interface Preferences {
-  aerospacePath?: string;
-  configPath?: string;
-}
+/**
+ * `Preferences` is generated into raycast-env.d.ts from package.json, so it is used
+ * rather than redeclared. A hand-written copy drifts from the manifest and would let a
+ * preference that no longer exists still typecheck.
+ */
+type PreferenceName = keyof Preferences;
 
 /** Expand a leading `~` so a preference can be written the way a person types it. */
 function expandHome(path: string): string {
   return path.startsWith("~") ? join(homedir(), path.slice(1)) : path;
 }
 
-function preference(name: keyof Preferences): string | undefined {
+function preference(name: PreferenceName): string | undefined {
   try {
     const value = getPreferenceValues<Preferences>()[name]?.trim();
     return value ? expandHome(value) : undefined;
@@ -164,10 +166,17 @@ export async function loadBindings(): Promise<{ bindings: Binding[]; configPath:
  * Writing follows symlinks, which is intended: a config symlinked into a dotfiles repo
  * should be edited in place there, not replaced with a regular file.
  */
-export async function saveConfig(raw: string): Promise<void> {
+export interface SaveResult {
+  /** True when AeroSpace picked the change up. */
+  applied: boolean;
+  /** Set when the file saved but the live reload did not take. */
+  warning?: string;
+}
+
+export async function saveConfig(raw: string): Promise<SaveResult> {
   const configPath = await getConfigPath();
   const original = await readFile(configPath, "utf-8");
-  if (original === raw) return;
+  if (original === raw) return { applied: true };
 
   await writeFile(configPath, raw, "utf-8");
   try {
@@ -177,9 +186,19 @@ export async function saveConfig(raw: string): Promise<void> {
     const detail = e instanceof Error ? (e.message.trim().split("\n").pop() ?? "") : String(e);
     throw new Error(`AeroSpace rejected the change, so nothing was saved. ${detail}`);
   }
-  // The config may set auto-reload-config, in which case this is redundant but
-  // harmless, and it is the only thing that applies the change when it does not.
-  await aerospace("reload-config").catch(() => undefined);
+
+  // The config may set auto-reload-config, in which case this is redundant, and it is
+  // the only thing that applies the change when it does not. Discarding a failure here
+  // would report success while AeroSpace kept running the previous config, so the
+  // outcome is returned instead: the file is saved and valid either way, which is why
+  // this is a warning rather than a rollback.
+  try {
+    await aerospace("reload-config");
+    return { applied: true };
+  } catch (e) {
+    const detail = e instanceof Error ? (e.message.trim().split("\n").pop() ?? "") : String(e);
+    return { applied: false, warning: `Saved, but AeroSpace did not reload it. ${detail}` };
+  }
 }
 
 /**

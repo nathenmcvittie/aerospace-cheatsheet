@@ -159,6 +159,47 @@ describe("editConfig — add, remove, rebind", () => {
   });
 });
 
+describe("editConfig — quoted table headers", () => {
+  // [mode."main".binding] is valid TOML and parses to the same table as the bare form.
+  // Matching only the bare form made editing impossible and made addBinding append a
+  // second header, producing a file TOML rejects as a redefined table.
+  const QUOTED = `[mode."main".binding]
+    ctrl-alt-c = 'layout --root h_tiles'
+    ctrl-alt-r = 'layout --root v_tiles'
+`;
+
+  it("finds a binding under a quoted mode segment", () => {
+    assert.notEqual(findBindingLine(QUOTED, "main", "ctrl-alt-c"), -1);
+  });
+
+  it("edits it without throwing", () => {
+    const { raw } = updateBinding(QUOTED, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });
+    const parsed = parse(raw) as never as { mode: { main: { binding: Record<string, unknown> } } };
+    assert.equal(parsed.mode.main.binding["ctrl-alt-c"], "fullscreen");
+  });
+
+  it("adds into the existing section rather than duplicating the header", () => {
+    const { raw } = addBinding(QUOTED, "main", "ctrl-alt-b", "balance-sizes");
+    assert.doesNotThrow(() => parse(raw), "produced a redefined-table document");
+    const headers = raw.split("\n").filter((l) => /^\s*\[mode\./.test(l));
+    assert.equal(headers.length, 1, `expected one mode header, got ${headers.length}`);
+    const parsed = parse(raw) as never as { mode: { main: { binding: Record<string, unknown> } } };
+    assert.equal(Object.keys(parsed.mode.main.binding).length, 3);
+  });
+
+  it("still distinguishes different modes when both are quoted", () => {
+    const two = `[mode."main".binding]\n    a = 'focus left'\n\n[mode."service".binding]\n    b = 'focus right'\n`;
+    assert.notEqual(findBindingLine(two, "main", "a"), -1);
+    assert.equal(findBindingLine(two, "main", "b"), -1, "leaked across the section boundary");
+    assert.notEqual(findBindingLine(two, "service", "b"), -1);
+  });
+
+  it("does not treat an array-of-tables header as a mode section", () => {
+    const arr = `[[on-window-detected]]\n    run = 'layout floating'\n`;
+    assert.equal(findBindingLine(arr, "main", "run"), -1);
+  });
+});
+
 describe("editConfig — verification gate", () => {
   it("accepts an edit that landed as intended", () => {
     const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });

@@ -27,9 +27,44 @@ interface Section {
   end: number;
 }
 
+/**
+ * Splits a TOML table header into its key path, honoring quoted segments.
+ *
+ * `[mode."main".binding]` is valid TOML and parses to the same table as
+ * `[mode.main.binding]`, so a matcher that only accepts the bare form fails to find a
+ * section the parser can see. That made editing impossible on such a config, and made
+ * `addBinding` append a second `[mode.main.binding]` header, producing a file TOML
+ * rejects as a redefined table.
+ */
+function tablePath(line: string): string[] | undefined {
+  const match = line.match(/^\s*\[([^\]]+)\]\s*$/);
+  if (!match) return undefined;
+
+  const segments: string[] = [];
+  let current = "";
+  let quote: string | null = null;
+  for (const char of match[1]) {
+    if (quote) {
+      if (char === quote) quote = null;
+      else current += char;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === ".") {
+      segments.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  segments.push(current.trim());
+  return segments;
+}
+
 function findSection(lines: string[], mode: string): Section | undefined {
-  const header = new RegExp(`^\\s*\\[mode\\.${escapeRegExp(mode)}\\.binding\\]\\s*$`);
-  const index = lines.findIndex((line) => header.test(line));
+  const index = lines.findIndex((line) => {
+    const path = tablePath(line);
+    return path?.length === 3 && path[0] === "mode" && path[1] === mode && path[2] === "binding";
+  });
   if (index === -1) return undefined;
 
   let end = lines.length;

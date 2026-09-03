@@ -54,10 +54,13 @@ export function EditBinding({ target, onSaved }: { target: EditTarget; onSaved?:
       const check = verifyEdit(edit.raw, target.mode, nextKey, nextCommand);
       if (!check.ok) throw new Error(check.reason);
 
-      await saveConfig(edit.raw);
-      toast.style = Toast.Style.Success;
-      toast.title = edit.summary;
-      toast.message = keyDisplay(nextKey);
+      const result = await saveConfig(edit.raw);
+      // A save that AeroSpace did not reload is not a failure, but it is not success
+      // either: the binding will not work until it reloads, and saying nothing would
+      // leave the user pressing a key that does nothing.
+      toast.style = result.applied ? Toast.Style.Success : Toast.Style.Failure;
+      toast.title = result.applied ? edit.summary : "Saved, but not applied";
+      toast.message = result.warning ?? keyDisplay(nextKey);
       onSaved?.();
       pop();
     } catch (e) {
@@ -84,9 +87,10 @@ export function EditBinding({ target, onSaved }: { target: EditTarget; onSaved?:
       const check = verifyEdit(edit.raw, target.mode, target.key as string, null);
       if (!check.ok) throw new Error(check.reason);
 
-      await saveConfig(edit.raw);
-      toast.style = Toast.Style.Success;
-      toast.title = edit.summary;
+      const result = await saveConfig(edit.raw);
+      toast.style = result.applied ? Toast.Style.Success : Toast.Style.Failure;
+      toast.title = result.applied ? edit.summary : "Removed, but not applied";
+      if (result.warning) toast.message = result.warning;
       onSaved?.();
       pop();
     } catch (e) {
