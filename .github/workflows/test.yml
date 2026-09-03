@@ -1,0 +1,28 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The generators are the source of truth for assets/. Running them and
+      # checking for a diff proves the committed files match what the code emits,
+      # which is what stops a screenshot or diagram quietly going stale.
+      - name: Assets are up to date
+        run: |
+          npm run diagrams
+          npm run icon
+          git diff --exit-code -- assets src/lib/diagram-sizes.json
+
+      - run: npm run test

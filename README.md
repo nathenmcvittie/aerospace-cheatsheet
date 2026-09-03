@@ -1,7 +1,19 @@
+<div align="center">
+
+<img src="assets/icon.png" width="96" alt="">
+
 # AeroSpace Cheatsheet
 
-A Raycast extension for looking up, learning, and running your
-[AeroSpace](https://nikitabobko.github.io/AeroSpace/) keybindings.
+**Look up, learn, and run your [AeroSpace](https://nikitabobko.github.io/AeroSpace/) keybindings, from Raycast.**
+
+[![test](https://github.com/nathenmcvittie/aerospace-cheatsheet/actions/workflows/test.yml/badge.svg)](https://github.com/nathenmcvittie/aerospace-cheatsheet/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Raycast](https://img.shields.io/badge/Raycast-extension-FF6363?style=flat-square&logo=raycast&logoColor=white)](https://raycast.com)
+[![macOS](https://img.shields.io/badge/macOS-000?style=flat-square&logo=apple&logoColor=white)](https://nikitabobko.github.io/AeroSpace/)
+
+<img src="metadata/aerospace-cheatsheet-2.png" width="820" alt="The cheatsheet showing a keybinding with a before-and-after diagram of the window layout it produces">
+
+</div>
 
 It reads your own `aerospace.toml`. Every key it shows is a key you actually have, so it
 works the same whether you run the defaults, a config you inherited from someone, or
@@ -57,6 +69,10 @@ why joining a left or right neighbour produces a vertically stacked column.
 **Recipes.** Short walkthroughs for shapes you want on screen: a strip down one side
 with a stack beside it, a 2×2 grid, even columns, or a reset back to a clean workspace.
 Each step names the key from your config.
+
+<div align="center">
+<img src="metadata/aerospace-cheatsheet-4.png" width="760" alt="A recipe walkthrough with a four-frame storyboard and numbered steps">
+</div>
 
 **Nothing gets hidden.** A binding the extension doesn't recognise still appears, under
 "Other", showing its raw command.
