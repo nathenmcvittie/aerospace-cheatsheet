@@ -37,26 +37,39 @@ interface Section {
  * rejects as a redefined table.
  */
 function tablePath(line: string): string[] | undefined {
-  const match = line.match(/^\s*\[([^\]]+)\]\s*$/);
-  if (!match) return undefined;
+  const trimmed = line.trimStart();
+  // `[[x]]` is an array of tables, never a binding section.
+  if (!trimmed.startsWith("[") || trimmed.startsWith("[[")) return undefined;
 
   const segments: string[] = [];
   let current = "";
   let quote: string | null = null;
-  for (const char of match[1]) {
+  let closed = -1;
+
+  for (let i = 1; i < trimmed.length; i++) {
+    const char = trimmed[i];
     if (quote) {
       if (char === quote) quote = null;
       else current += char;
-    } else if (char === '"' || char === "'") {
-      quote = char;
-    } else if (char === ".") {
+      continue;
+    }
+    if (char === '"' || char === "'") quote = char;
+    else if (char === ".") {
       segments.push(current.trim());
       current = "";
-    } else {
-      current += char;
-    }
+    } else if (char === "]") {
+      closed = i;
+      break;
+    } else current += char;
   }
+  if (closed === -1) return undefined;
   segments.push(current.trim());
+
+  // Only whitespace and a comment may follow the closing bracket. A `#` inside a
+  // quoted key is handled above, so it is never mistaken for one starting here.
+  const rest = trimmed.slice(closed + 1).trim();
+  if (rest !== "" && !rest.startsWith("#")) return undefined;
+
   return segments;
 }
 
@@ -69,7 +82,7 @@ function findSection(lines: string[], mode: string): Section | undefined {
 
   let end = lines.length;
   for (let i = index + 1; i < lines.length; i++) {
-    if (/^\s*\[/.test(lines[i])) {
+    if (tablePath(lines[i]) !== undefined || /^\s*\[\[/.test(lines[i])) {
       end = i;
       break;
     }

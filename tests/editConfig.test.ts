@@ -200,6 +200,50 @@ describe("editConfig — quoted table headers", () => {
   });
 });
 
+describe("editConfig — section headers with trailing comments", () => {
+  // A header may carry a comment. Requiring the line to end at the closing bracket
+  // made findSection miss the table, so editing reported the binding did not exist.
+  const cases: [string, string][] = [
+    ["space then comment", "[mode.main.binding] # keybindings"],
+    ["comment, no space", "[mode.main.binding]# keybindings"],
+    ["quoted mode and comment", '[mode."main".binding]   # keys'],
+    ["trailing whitespace", "[mode.main.binding]   "],
+  ];
+
+  for (const [label, header] of cases) {
+    it(`finds a binding under a header with ${label}`, () => {
+      const toml = `${header}\n    ctrl-alt-c = 'fullscreen'\n`;
+      assert.notEqual(findBindingLine(toml, "main", "ctrl-alt-c"), -1);
+      const { raw } = updateBinding(toml, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "balance-sizes" });
+      assert.ok(raw.includes(header), "the header and its comment were not preserved");
+      assert.doesNotThrow(() => parse(raw));
+    });
+  }
+
+  it("does not mistake a hash inside a quoted key for a comment", () => {
+    const toml = `[mode."a#b".binding]\n    ctrl-alt-c = 'fullscreen'\n`;
+    assert.notEqual(findBindingLine(toml, "a#b", "ctrl-alt-c"), -1);
+    assert.equal(findBindingLine(toml, "a", "ctrl-alt-c"), -1);
+  });
+
+  it("still ignores an array-of-tables header, with or without a comment", () => {
+    assert.equal(findBindingLine(`[[on-window-detected]]\n    run = 'x'\n`, "main", "run"), -1);
+    assert.equal(findBindingLine(`[[on-window-detected]] # float\n    run = 'x'\n`, "main", "run"), -1);
+  });
+
+  it("ends a section at the next commented header rather than running past it", () => {
+    const toml = [
+      "[mode.main.binding] # main keys",
+      "    a = 'focus left'",
+      "[mode.service.binding] # service keys",
+      "    b = 'focus right'",
+      "",
+    ].join("\n");
+    assert.equal(findBindingLine(toml, "main", "b"), -1, "leaked past the commented header");
+    assert.notEqual(findBindingLine(toml, "service", "b"), -1);
+  });
+});
+
 describe("editConfig — verification gate", () => {
   it("accepts an edit that landed as intended", () => {
     const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });
