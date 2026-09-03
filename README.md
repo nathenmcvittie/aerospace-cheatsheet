@@ -11,7 +11,7 @@
 [![Raycast](https://img.shields.io/badge/Raycast-extension-FF6363?style=flat-square&logo=raycast&logoColor=white)](https://raycast.com)
 [![macOS](https://img.shields.io/badge/macOS-000?style=flat-square&logo=apple&logoColor=white)](https://nikitabobko.github.io/AeroSpace/)
 
-<img src="metadata/aerospace-cheatsheet-2.png" width="820" alt="The cheatsheet showing a keybinding with a before-and-after diagram of the window layout it produces">
+<img src="metadata/aerospace-cheatsheet-1.png" width="820" alt="The cheatsheet showing a keybinding with a before-and-after diagram of the window layout it produces">
 
 </div>
 
@@ -84,7 +84,7 @@ included. The change is re-parsed, then applied with `reload-config`, and if Aer
 rejects it your config is restored exactly as it was.
 
 <div align="center">
-<img src="metadata/aerospace-cheatsheet-7.png" width="760" alt="The edit form, showing the key and command fields with the glyphs they render as">
+<img src="metadata/aerospace-cheatsheet-6.png" width="760" alt="The edit form, showing the key and command fields with the glyphs they render as">
 </div>
 
 ## Working from your config
@@ -146,12 +146,6 @@ Diagrams and the icon are both generated rather than drawn. To change the diagra
 palette, edit `PAL` in `tools/gen-diagrams.mjs` and re-run `npm run diagrams`; all 42
 SVGs re-emit. Each diagram ships as a light and a dark file, and Raycast picks between
 them by the `@dark` filename suffix.
-
-Store screenshots in `metadata/` are generated too. The generator bundles the
-extension's own row-building code and feeds it a fixture config, so a screenshot
-cannot drift from what the extension renders, and it uses invented bindings and app
-names so nothing from a real machine ends up in the repo. It needs a Chromium-based
-browser installed, and writes 2000x1250 PNGs with transparent backgrounds.
 
 To teach the cheatsheet a command it does not know yet, add an entry to `ENTRIES` in
 `src/lib/dictionary.ts`. An entry is a regex against the command plus a label, a group,

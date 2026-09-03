@@ -11,8 +11,8 @@
 //    project names, and client names into a public repo. The fixture below is a
 //    plausible config and a plausible set of open windows, and nothing more.
 //
-// Output is 2000x1250 at 2x with a transparent background, so the window sits
-// isolated on whatever the store or a README places behind it.
+// Output is 2000x1250 at 2x on one consistent opaque background, which is what the
+// store specs ask for: they composite the image as-is and define no dark variant.
 
 import { execFile } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -142,7 +142,12 @@ function highlightToml(src) {
 
 const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:transparent;width:1000px;height:625px;overflow:hidden}
+html,body{width:1000px;height:625px;overflow:hidden}
+/* The backdrop is a real positioned element, not a body background. Chrome renders the
+   page shorter than the requested window and pads the screenshot with white, so a
+   viewport-dependent background left a white band along the bottom. */
+.bg{position:fixed;top:0;left:0;width:1000px;height:625px;z-index:-1;
+  background:radial-gradient(120% 120% at 50% 0%, #2f3340 0%, #1a1c24 55%, #101218 100%)}
 body{display:flex;align-items:center;justify-content:center;
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,sans-serif;
   -webkit-font-smoothing:antialiased}
@@ -225,8 +230,22 @@ const GROUP_COLOR = {
   other: "#8e8e93",
 };
 
+/** Top-anchored crop via CoreGraphics, which is present on every Mac. */
+const CROP = `
+import sys, Quartz
+path, w, h = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+url = Quartz.CFURLCreateFromFileSystemRepresentation(None, path.encode(), len(path), False)
+img = Quartz.CGImageSourceCreateImageAtIndex(Quartz.CGImageSourceCreateWithURL(url, None), 0, None)
+if Quartz.CGImageGetWidth(img) == w and Quartz.CGImageGetHeight(img) == h:
+    sys.exit(0)
+cropped = Quartz.CGImageCreateWithImageInRect(img, Quartz.CGRectMake(0, 0, w, h))
+dest = Quartz.CGImageDestinationCreateWithURL(url, "public.png", 1, None)
+Quartz.CGImageDestinationAddImage(dest, cropped, None)
+Quartz.CGImageDestinationFinalize(dest)
+`;
+
 function page(inner) {
-  return `<!doctype html><meta charset="utf-8"><style>${CSS}</style><body>${inner}</body>`;
+  return `<!doctype html><meta charset="utf-8"><style>${CSS}</style><body><div class="bg"></div>${inner}</body>`;
 }
 
 function chrome({ query, placeholder, dropdown, listHtml, detailHtml, fullWidth, primaryAction }) {
@@ -364,7 +383,9 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
   }
 
   // ---- scenes ----
-  const joinRight = find("Join with the window to its right");
+  // Looked up by title, so this tracks the dictionary rather than a hardcoded string.
+  const joinRight = find("Join right");
+  if (!joinRight) throw new Error('No "Join right" row — has the dictionary label changed?');
   const searchRows = rows.filter((r) =>
     /join|flatten|balance|root axis/i.test(r.title) || /stack/i.test((r.keywords ?? []).join(" ")),
   );
@@ -462,7 +483,7 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
       }),
     },
     {
-      name: "aerospace-cheatsheet-7",
+      name: "aerospace-cheatsheet-6",
       html: `<div class="win">
         <div class="search">${SEARCH_ICON}<div class="ph">Edit ⌃ ⌥ ⌘ L</div></div>
         <div class="body"><div class="form">
@@ -486,20 +507,6 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
         <div class="bar"><b>Save Binding</b><span class="kbd">↵</span>
           <b style="margin-left:8px">Actions</b><span class="kbd">⌘K</span></div></div>`,
     },
-    {
-      name: "aerospace-cheatsheet-6",
-      html: `<div class="win">
-        <div class="search">${SEARCH_ICON}<div class="ph">AeroSpace Config</div></div>
-        <div class="body"><div class="detail" style="padding:16px 18px">
-          <pre>${highlightToml(FIXTURE_TOML)}</pre>
-          <div class="meta">
-            <div class="r"><span class="k">Path</span><span class="v">~/.aerospace.toml</span></div>
-            <div class="r"><span class="k">Bindings</span><span class="v">${bindings.length}</span></div>
-          </div>
-        </div></div>
-        <div class="bar"><b>Open in Editor</b><span class="kbd">↵</span>
-          <b style="margin-left:8px">Actions</b><span class="kbd">⌘K</span></div></div>`,
-    },
   ];
 
   const browser = BROWSERS.find((b) => {
@@ -519,17 +526,22 @@ export { RECIPES, resolveRecipe } from "${join(ROOT, "src/lib/recipes.ts").repla
       "--headless=new",
       "--disable-gpu",
       "--hide-scrollbars",
-      "--default-background-color=00000000", // transparent, so the window sits isolated
-      "--window-size=1000,625",
+          // Opaque: the store composites these as-is and specifies no dark-mode variant,
+      // so a transparent PNG would sit on an undefined backdrop.
+      "--window-size=1000,706", // 625 + 81px of headless window chrome, measured
       "--force-device-scale-factor=2", // 2x -> the 2000x1250 the store expects
       `--screenshot=${join(OUT, `${scene.name}.png`)}`,
       `file://${htmlPath}`,
     ]);
+    // Chrome reserves 81 CSS px of window chrome even in headless, so the window is
+    // asked for 706 and the extra is cropped off the bottom. Measured, not guessed:
+    // the unpainted region begins at exactly y=1250 in the 2x output.
+    await exec("python3", ["-c", CROP, join(OUT, `${scene.name}.png`), "2000", "1250"]);
     console.log(`  ${scene.name}.png`);
   }
 
   rmSync(TMP, { recursive: true, force: true });
-  console.log(`\nwrote ${scenes.length} screenshots to metadata/ (2000x1250, transparent)`);
+  console.log(`\nwrote ${scenes.length} screenshots to metadata/ (2000x1250, opaque, store spec)`);
 }
 
 main().catch((error) => {
