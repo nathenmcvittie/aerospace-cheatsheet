@@ -244,6 +244,55 @@ describe("editConfig — section headers with trailing comments", () => {
   });
 });
 
+describe("editConfig — every spelling the format allows", () => {
+  // Both P1s from review came from fixtures written in one canonical style. This is
+  // the matrix of spellings TOML actually permits, so a config written by someone
+  // else is covered rather than only a config written the way these tests were.
+  const cases: [string, string][] = [
+    ["literal string", "[mode.main.binding]\n    k = 'focus left'\n"],
+    ["basic string", '[mode.main.binding]\n    k = "focus left"\n'],
+    ["no spaces around equals", "[mode.main.binding]\n    k='focus left'\n"],
+    ["extra spaces", "[mode.main.binding]\n    k    =    'focus left'\n"],
+    ["tab indentation", "[mode.main.binding]\n\tk = 'focus left'\n"],
+    ["no indentation", "[mode.main.binding]\nk = 'focus left'\n"],
+    ["quoted key", '[mode.main.binding]\n    "k" = \'focus left\'\n'],
+    ["single-quoted key", "[mode.main.binding]\n    'k' = 'focus left'\n"],
+    ["CRLF endings", "[mode.main.binding]\r\n    k = 'focus left'\r\n"],
+    ["single-line array", "[mode.main.binding]\n    k = ['focus left', 'mode main']\n"],
+    ["multi-line array", "[mode.main.binding]\n    k = [\n      'focus left',\n      'mode main',\n    ]\n"],
+    ["multi-line array with comment", "[mode.main.binding]\n    k = [\n      'focus left',\n    ]  # go left\n"],
+    ["hash inside the value", "[mode.main.binding]\n    k = 'exec-and-forget echo #1'\n"],
+    ["comment after value", "[mode.main.binding]\n    k = 'focus left'  # go left\n"],
+    ["comment line above", "[mode.main.binding]\n    # focus\n    k = 'focus left'\n"],
+    ["blank lines in section", "[mode.main.binding]\n\n\n    k = 'focus left'\n"],
+    ["preamble before section", "config-version = 2\n\n[mode.main.binding]\n    k = 'focus left'\n"],
+    ["quoted header and CRLF", '[mode."main".binding] # keys\r\n    k = \'focus left\'\r\n'],
+  ];
+
+  for (const [label, toml] of cases) {
+    it(`edits a binding written with ${label}`, () => {
+      assert.doesNotThrow(() => parse(toml), "the fixture itself is not valid TOML");
+      assert.notEqual(findBindingLine(toml, "main", "k"), -1, "binding not found");
+
+      const { raw } = updateBinding(toml, "main", "k", { key: "k", command: "fullscreen" });
+      const parsed = parse(raw) as never as { mode: { main: { binding: Record<string, unknown> } } };
+      assert.equal(parsed.mode.main.binding.k, "fullscreen");
+    });
+
+    it(`removes a binding written with ${label} without leaving orphans`, () => {
+      const { raw } = removeBinding(toml, "main", "k");
+      assert.doesNotThrow(() => parse(raw), "removal produced invalid TOML");
+      assert.ok(!raw.includes("focus left"), "part of the value survived removal");
+    });
+  }
+
+  it("preserves CRLF rather than rewriting the file to LF", () => {
+    const toml = "[mode.main.binding]\r\n    k = 'focus left'\r\n";
+    const { raw } = updateBinding(toml, "main", "k", { key: "k", command: "fullscreen" });
+    assert.ok(raw.includes("\r\n"), "line endings were normalised, which would diff every line");
+  });
+});
+
 describe("editConfig — verification gate", () => {
   it("accepts an edit that landed as intended", () => {
     const { raw } = updateBinding(CONFIG, "main", "ctrl-alt-c", { key: "ctrl-alt-c", command: "fullscreen" });

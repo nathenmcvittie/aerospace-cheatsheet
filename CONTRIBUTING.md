@@ -76,7 +76,19 @@ dotfiles repo, and which controls whether the user's windows work.
   array values. Asserting "the file still parses" is not enough; assert that exactly
   one line changed and that its trailing comment survived.
 
-## Rule 4 — anything returned from useCachedPromise must survive JSON
+## Rule 4 — cover every spelling the format allows, not the one you write
+
+Four bugs in `editConfig.ts` came from one cause: the fixtures were all written in the
+single style the parser already handled. A quoted mode header, a comment after a header,
+CRLF endings, and an array spanning lines each broke editing outright, and two of them
+produced invalid TOML. Over a hundred tests passed throughout, because a fixture written
+by the parser's author encodes the parser's assumptions.
+
+`tests/editConfig.test.ts` now carries a matrix of the spellings TOML actually permits.
+Add to it before adding a parsing branch. The question to ask is "what would someone
+else's file look like", never "does my example parse".
+
+## Rule 5 — anything returned from useCachedPromise must survive JSON
 
 The hook persists its result as JSON, so a `Map`, `Set`, `Date` or class instance comes
 back as something else on a cache hit. `workspaceMonitors()` returned a `Map`, which
@@ -87,7 +99,7 @@ which is exactly the shape of bug a first-load screenshot cannot catch.
 Return plain objects and arrays. Where the shape is built by a helper, keep that helper
 pure so a test can assert `JSON.parse(JSON.stringify(x))` round-trips unchanged.
 
-## Rule 5 — verify UI against a real capture, not a mock
+## Rule 6 — verify UI against a real capture, not a mock
 
 Two bugs shipped past a build, a type-check, 61 tests and a lint run, and both were
 obvious the first time the extension was photographed running:
@@ -117,7 +129,7 @@ rm -rf ~/Library/Caches/com.raycast.macos/fsCachedData
 open -a Raycast
 ```
 
-## Rule 6 — check the CLI's real output, not its documentation
+## Rule 7 — check the CLI's real output, not its documentation
 
 `aerospace list-windows --all --json` does **not** include the workspace unless
 `--format` asks for it. That silently broke four commands, and nothing in the types or

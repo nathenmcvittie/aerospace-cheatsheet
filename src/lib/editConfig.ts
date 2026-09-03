@@ -92,7 +92,7 @@ function findSection(lines: string[], mode: string): Section | undefined {
 
 /** Index of the line binding `key` within `mode`, or -1. */
 export function findBindingLine(raw: string, mode: string, key: string): number {
-  const lines = raw.split("\n");
+  const { lines } = splitLines(raw);
   const section = findSection(lines, mode);
   if (!section) return -1;
 
@@ -126,7 +126,7 @@ export function toTomlValue(command: string): string {
  * the prefix, and the comment explaining the binding lives in the suffix; losing
  * either is the thing this whole module exists to avoid.
  */
-function splitLine(line: string): { prefix: string; suffix: string } | undefined {
+function splitLine(line: string, lastLine?: string): { prefix: string; suffix: string } | undefined {
   const match = line.match(/^(\s*(?:['"])?[\w.-]+(?:['"])?\s*=\s*)(.*)$/);
   if (!match) return undefined;
 
@@ -156,7 +156,55 @@ function splitLine(line: string): { prefix: string; suffix: string } | undefined
     const hash = rest.indexOf("#");
     end = hash === -1 ? rest.length : hash;
   }
+  if (lastLine !== undefined) {
+    const hash = lastLine.indexOf("#");
+    return { prefix, suffix: hash === -1 ? "" : ` ${lastLine.slice(hash)}` };
+  }
   return { prefix, suffix: rest.slice(end) };
+}
+
+/**
+ * Splits into lines while remembering the file's own ending.
+ *
+ * A config saved with CRLF left a trailing \r on every line, which the value parser
+ * read as part of the value and then failed on. Editing such a file was impossible.
+ * The ending is preserved on write so an edit never silently rewrites the whole file
+ * to LF, which would show up as a diff touching every line.
+ */
+function splitLines(raw: string): { lines: string[]; eol: string } {
+  const eol = raw.includes("\r\n") ? "\r\n" : "\n";
+  return { lines: raw.split(/\r?\n/), eol };
+}
+
+/**
+ * How many lines a binding's value occupies, starting at `index`.
+ *
+ * An array value may span lines. Reading only the first line left the remaining
+ * elements orphaned after the rewrite and produced a document TOML rejects.
+ */
+function valueExtent(lines: string[], index: number): number {
+  const after = lines[index].slice(lines[index].indexOf("=") + 1);
+  let depth = 0;
+  let quote: string | null = null;
+  const scan = (text: string) => {
+    for (const char of text) {
+      if (quote) {
+        if (char === quote) quote = null;
+        continue;
+      }
+      if (char === '"' || char === "'") quote = char;
+      else if (char === "[") depth++;
+      else if (char === "]") depth--;
+      else if (char === "#" && depth === 0) return;
+    }
+  };
+  scan(after);
+  let span = 1;
+  while (depth > 0 && index + span < lines.length) {
+    scan(lines[index + span]);
+    span++;
+  }
+  return span;
 }
 
 export interface EditResult {
@@ -172,11 +220,14 @@ export function updateBinding(
   key: string,
   next: { key: string; command: string },
 ): EditResult {
-  const lines = raw.split("\n");
+  const { lines, eol } = splitLines(raw);
   const index = findBindingLine(raw, mode, key);
   if (index === -1) throw new Error(`No binding for ${key} in [mode.${mode}.binding].`);
 
-  const parts = splitLine(lines[index]);
+  const span = valueExtent(lines, index);
+  // A multi-line value is replaced by a single line; the trailing comment is taken
+  // from the last line the value occupied, which is where a reader would have put it.
+  const parts = splitLine(lines[index], span > 1 ? lines[index + span - 1] : undefined);
   if (!parts) throw new Error(`Could not read the binding on line ${index + 1}.`);
 
   // Rebuild the prefix only when the key itself changed, so existing alignment and
@@ -184,9 +235,9 @@ export function updateBinding(
   const prefix =
     next.key === key ? parts.prefix : parts.prefix.replace(/^(\s*)(?:['"])?[\w.-]+(?:['"])?/, `$1${next.key}`);
 
-  lines[index] = `${prefix}${toTomlValue(next.command)}${parts.suffix}`;
+  lines.splice(index, span, `${prefix}${toTomlValue(next.command)}${parts.suffix}`);
   return {
-    raw: lines.join("\n"),
+    raw: lines.join(eol),
     summary: next.key === key ? `Updated ${key}` : `Rebound ${key} to ${next.key}`,
   };
 }
@@ -197,7 +248,7 @@ export function addBinding(raw: string, mode: string, key: string, command: stri
     throw new Error(`${key} is already bound in [mode.${mode}.binding].`);
   }
 
-  const lines = raw.split("\n");
+  const { lines, eol } = splitLines(raw);
   const section = findSection(lines, mode);
   if (!section) {
     const trimmed = raw.replace(/\s*$/, "");
@@ -215,15 +266,15 @@ export function addBinding(raw: string, mode: string, key: string, command: stri
   while (insertAt > section.start && lines[insertAt - 1].trim() === "") insertAt--;
 
   lines.splice(insertAt, 0, `${indent}${key} = ${toTomlValue(command)}`);
-  return { raw: lines.join("\n"), summary: `Added ${key}` };
+  return { raw: lines.join(eol), summary: `Added ${key}` };
 }
 
 export function removeBinding(raw: string, mode: string, key: string): EditResult {
-  const lines = raw.split("\n");
+  const { lines, eol } = splitLines(raw);
   const index = findBindingLine(raw, mode, key);
   if (index === -1) throw new Error(`No binding for ${key} in [mode.${mode}.binding].`);
-  lines.splice(index, 1);
-  return { raw: lines.join("\n"), summary: `Removed ${key}` };
+  lines.splice(index, valueExtent(lines, index));
+  return { raw: lines.join(eol), summary: `Removed ${key}` };
 }
 
 /**
