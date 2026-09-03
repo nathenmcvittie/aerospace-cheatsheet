@@ -17,5 +17,9 @@ Bindings that change the window layout carry a before-and-after diagram. Recipes
 through arrangements worth knowing how to build, naming the key from your own config at
 each step, and saying so when a step needs a command you have not bound.
 
-Alongside it: Go to Workspace, Switch Windows, Show AeroSpace Config, and a menu bar
-command with the current workspace and common layout actions.
+Alongside it: Go to Workspace; Switch Windows, which groups every window by the
+workspace it sits on and can focus it, pull it to the current workspace, or tile and
+float it; Move Window to Workspace, which will create a workspace whose name you type;
+Bring Workspace to This Display; Toggle AeroSpace and Reload AeroSpace Config as
+one-press commands; Show AeroSpace Config; and a menu bar command with the current
+workspace and common layout actions.

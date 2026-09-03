@@ -61,3 +61,58 @@ export async function focusWorkspace(name: string): Promise<void> {
 export async function focusWindow(windowId: number): Promise<void> {
   await aerospace("focus", "--window-id", String(windowId));
 }
+
+export interface Monitor {
+  id: number;
+  name: string;
+}
+
+export async function listMonitors(): Promise<Monitor[]> {
+  const raw = await aerospace("list-monitors", "--json");
+  const parsed = JSON.parse(raw) as { "monitor-id": number; "monitor-name": string }[];
+  return parsed.map((m) => ({ id: m["monitor-id"], name: m["monitor-name"] }));
+}
+
+export async function focusedMonitor(): Promise<Monitor | undefined> {
+  const raw = await aerospace("list-monitors", "--focused", "--json");
+  const parsed = JSON.parse(raw) as { "monitor-id": number; "monitor-name": string }[];
+  const first = parsed[0];
+  return first ? { id: first["monitor-id"], name: first["monitor-name"] } : undefined;
+}
+
+/** Which monitor each workspace currently sits on, keyed by workspace name. */
+export async function workspaceMonitors(): Promise<Map<string, number>> {
+  const monitors = await listMonitors();
+  const pairs = await Promise.all(
+    monitors.map(async (m) => {
+      const raw = await aerospace("list-workspaces", "--monitor", String(m.id), "--json").catch(() => "[]");
+      return (JSON.parse(raw) as { workspace: string }[]).map((w) => [w.workspace, m.id] as const);
+    }),
+  );
+  return new Map(pairs.flat());
+}
+
+export async function moveWorkspaceToMonitor(workspace: string, monitorId: number): Promise<void> {
+  await aerospace("move-workspace-to-monitor", "--workspace", workspace, "--", String(monitorId));
+}
+
+export async function moveFocusedWindowToWorkspace(workspace: string): Promise<void> {
+  await aerospace("move-node-to-workspace", "--", workspace);
+}
+
+/**
+ * Toggle tiling on or off, and report which way it went.
+ *
+ * `enable toggle` says nothing about the resulting state, so this asks for `on` with
+ * `--fail-if-noop`: succeeding means it had been off, and failing means it was already
+ * on and should be turned off instead. One extra call buys an accurate message.
+ */
+export async function toggleAerospace(): Promise<"enabled" | "disabled"> {
+  try {
+    await aerospace("enable", "on", "--fail-if-noop");
+    return "enabled";
+  } catch {
+    await aerospace("enable", "off");
+    return "disabled";
+  }
+}

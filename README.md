@@ -13,7 +13,11 @@ your own bindings.
 |---|---|
 | AeroSpace Cheatsheet | Your bindings, grouped and named, with diagrams and recipes |
 | Go to Workspace | Switch workspace, showing which apps are on each |
-| Switch Windows | Focus any window across all workspaces |
+| Switch Windows | Every window grouped by workspace: focus it, pull it here, tile or float it |
+| Move Window to Workspace | Send the focused window somewhere, creating the workspace if the name is new |
+| Bring Workspace to This Display | Pull a workspace onto the screen you are looking at |
+| Toggle AeroSpace | Pause or resume tiling, for screen sharing or an app that fights it |
+| Reload AeroSpace Config | Re-read `aerospace.toml`, checking it parses first |
 | Show AeroSpace Config | The raw `toml`, syntax-highlighted, with a jump to your editor |
 | AeroSpace Menu Bar | Current workspace plus common layout actions |
 
@@ -115,8 +119,16 @@ and optionally a diagram and an explanation.
 
 [limonkufu/aerospace](https://www.raycast.com/limonkufu/aerospace) covers similar
 ground and is where this started. The workspace and window commands do much the same
-job. The cheatsheet is where this one goes further: grouping, the merge rules, search
-terms, diagrams, recipes, and names instead of raw command strings.
+job, and its three window actions are carried over here. The cheatsheet is where this
+one goes further: grouping, the merge rules, search terms, diagrams, recipes, and names
+instead of raw command strings.
+
+Two ideas came from unpublished extensions worth crediting.
+[bblmian/raycast-aerospace-control-center](https://github.com/bblmian/raycast-aerospace-control-center)
+has the toggle and reload commands.
+[enengee/raycast-aerospace](https://github.com/enengee/raycast-aerospace) has moving a
+window to a workspace that does not exist yet, and summoning a workspace to the current
+display.
 
 ## Licence
 

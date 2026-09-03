@@ -40,6 +40,34 @@
       "mode": "view"
     },
     {
+      "name": "moveWindowToWorkspace",
+      "title": "Move Window to Workspace",
+      "subtitle": "AeroSpace",
+      "description": "Send the focused window to a workspace, creating it if the name is new",
+      "mode": "view"
+    },
+    {
+      "name": "bringWorkspaceHere",
+      "title": "Bring Workspace to This Display",
+      "subtitle": "AeroSpace",
+      "description": "Pull a workspace onto the display you are looking at",
+      "mode": "view"
+    },
+    {
+      "name": "toggleAerospace",
+      "title": "Toggle AeroSpace",
+      "subtitle": "AeroSpace",
+      "description": "Pause or resume tiling",
+      "mode": "no-view"
+    },
+    {
+      "name": "reloadConfig",
+      "title": "Reload AeroSpace Config",
+      "subtitle": "AeroSpace",
+      "description": "Re-read aerospace.toml, checking it parses first",
+      "mode": "no-view"
+    },
+    {
       "name": "menubar",
       "title": "AeroSpace Menu Bar",
       "subtitle": "AeroSpace",
